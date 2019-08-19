@@ -62,7 +62,7 @@ G.CustomTags = {
 		func = "function() return Hex(_COLORS.class['DEMONHUNTER']) end"
 	},
 	["classcolor:player"] = {
-		func = "function() return _VARS.E.myclass and Hex(_COLORS.class[_VARS.E.myclass]) or \"|cFFC2C2C2\" end"
+		func = "function() return _VARS.E.myclass and Hex(_COLORS.class[_VARS.E.myclass]) or '|cFFC2C2C2' end"
 	},
 }
 
@@ -149,7 +149,7 @@ local function CreateTagGroup(tag)
 			return tostring(E.global.CustomTags[info[#info - 1]] and E.global.CustomTags[info[#info - 1]][info[#info]] or G.CustomTags[info[#info - 1]][info[#info]]):gsub("\124", "\124\124")
 		end,
 		args = {
-			nameField = {
+			name = {
 				order = 1,
 				type = 'input',
 				width = 'full',
@@ -248,6 +248,7 @@ local function CreateTagGroup(tag)
 				name = 'Delete',
 				width = 'full',
 				confirm = true,
+				hidden = isDefaultTag,
 				func = function(info)
 					E.global.CustomTags[info[#info - 1]] = nil
 
@@ -256,6 +257,22 @@ local function CreateTagGroup(tag)
 					DeleteTagGroup(info[#info - 1])
 
 					E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup')
+				end,
+			},
+			reset = {
+				type = "execute",
+				order = 6,
+				name = L["Defaults"],
+				width = "full",
+				confirm = true,
+				hidden = function(info)
+					return not isDefaultTag(info)
+				end,
+				func = function(info)
+					E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]])
+
+					oUF_DeleteTag(info[#info - 1])
+					oUF_CreateTag(info[#info - 1])
 				end,
 			},
 		},
@@ -531,12 +548,8 @@ local function Initialize()
 	end
 
 	-- Build Saved Tags
-	for Tag, TagTable in next, E.global.CustomTags do
-		if oUF.Tags.Methods[Tag] then
-			E.global.CustomTags[Tag] = nil
-		else
-			oUF_CreateTag(TagTable)
-		end
+	for _, TagTable in next, E.global.CustomTags do
+		oUF_CreateTag(TagTable)
 	end
 
 	-- Build Default Saved Variables
@@ -545,12 +558,8 @@ local function Initialize()
 	end
 
 	-- Build Saved Variables
-	for Var, VarTable in next, E.global.CustomVars do
-		if oUF.Tags.Vars[Var] then
-			E.global.CustomTags[Var] = nil
-		else
-			oUF_CreateVar(VarTable)
-		end
+	for _, VarTable in next, E.global.CustomVars do
+		oUF_CreateVar(VarTable)
 	end
 
 	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)

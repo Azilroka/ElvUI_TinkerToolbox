@@ -25,51 +25,22 @@ local newVarInfo = { name = '', value = '' }
 local validator = CreateFrame('Frame')
 
 G.CustomTags = {
-	["classcolor:hunter"] = {
-		func = "function() return Hex(_COLORS.class['HUNTER']) end",
-	},
-	["classcolor:warrior"] = {
-		func = "function() return Hex(_COLORS.class['WARRIOR']) end"
-	},
-	["classcolor:paladin"] = {
-		func = "function() return Hex(_COLORS.class['PALADIN']) end"
-	},
-	["classcolor:mage"] = {
-		func = "function() return Hex(_COLORS.class['MAGE']) end"
-	},
-	["classcolor:priest"] = {
-		func = "function() return Hex(_COLORS.class['PRIEST']) end"
-	},
-	["classcolor:warlock"] = {
-		func = "function() return Hex(_COLORS.class['WARLOCK']) end"
-	},
-	["classcolor:shaman"] = {
-		func = "function() return Hex(_COLORS.class['SHAMAN']) end"
-	},
-	["classcolor:deathknight"] = {
-		func = "function() return Hex(_COLORS.class['DEATHKNIGHT']) end"
-	},
-	["classcolor:druid"] = {
-		func = "function() return Hex(_COLORS.class['DRUID']) end"
-	},
-	["classcolor:monk"] = {
-		func = "function() return Hex(_COLORS.class['MONK']) end"
-	},
-	["classcolor:rogue"] = {
-		func = "function() return Hex(_COLORS.class['ROGUE']) end"
-	},
-	["classcolor:demonhunter"] = {
-		func = "function() return Hex(_COLORS.class['DEMONHUNTER']) end"
-	},
 	["classcolor:player"] = {
-		func = "function() return _VARS.E.myclass and Hex(_COLORS.class[_VARS.E.myclass]) or '|cFFC2C2C2' end"
+		func = "function() return Hex(_COLORS.class[_VARS.E.myclass or 'PRIEST']) end"
 	},
 }
 
+-- Class Colors
+for CLASS in next, RAID_CLASS_COLORS do
+	G.CustomTags[format("classcolor:%s", strlower(CLASS))] = { func = format("function() return Hex(_COLORS.class['%s']) end", CLASS) }
+end
+
+-- Complete Table
 for TagName, Table in next, G.CustomTags do
-	for key in next, newTagInfo do
-		if not Table[key] then Table[key] = key == 'name' and TagName or '' end
-	end
+	if not Table['name'] then Table.name = TagName end
+	if not Table['func'] then Table.func = "function() end" end
+	if not Table['events'] then Table.events = '' end
+	if not Table['vars'] then Table.vars = '' end
 end
 
 G.CustomVars = {}
@@ -272,7 +243,7 @@ local function CreateTagGroup(tag)
 					E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]])
 
 					oUF_DeleteTag(info[#info - 1])
-					oUF_CreateTag(info[#info - 1])
+					oUF_CreateTag(E.global.CustomTags[info[#info - 1]])
 				end,
 			},
 		},
@@ -544,22 +515,22 @@ end
 local function Initialize()
 	-- Build Default Custom Tags
 	for _, TagTable in next, G.CustomTags do
-		oUF_CreateTag(TagTable)
+		pcall(oUF_CreateTag, TagTable)
 	end
 
 	-- Build Saved Tags
 	for _, TagTable in next, E.global.CustomTags do
-		oUF_CreateTag(TagTable)
+		pcall(oUF_CreateTag, TagTable)
 	end
 
 	-- Build Default Saved Variables
 	for _, VarTable in next, G.CustomVars do
-		oUF_CreateVar(VarTable)
+		pcall(oUF_CreateVar, VarTable)
 	end
 
 	-- Build Saved Variables
 	for _, VarTable in next, E.global.CustomVars do
-		oUF_CreateVar(VarTable)
+		pcall(oUF_CreateVar, VarTable)
 	end
 
 	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)

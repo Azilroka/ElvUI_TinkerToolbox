@@ -26,40 +26,43 @@ local validator = CreateFrame('Frame')
 
 G.CustomTags = {
 	["classcolor:hunter"] = {
-		["func"] = "function() return Hex(_COLORS.class['HUNTER']) end",
+		func = "function() return Hex(_COLORS.class['HUNTER']) end",
 	},
 	["classcolor:warrior"] = {
-		["func"] = "function() return Hex(_COLORS.class['WARRIOR']) end"
+		func = "function() return Hex(_COLORS.class['WARRIOR']) end"
 	},
 	["classcolor:paladin"] = {
-		["func"] = "function() return Hex(_COLORS.class['PALADIN']) end"
+		func = "function() return Hex(_COLORS.class['PALADIN']) end"
 	},
 	["classcolor:mage"] = {
-		["func"] = "function() return Hex(_COLORS.class['MAGE']) end"
+		func = "function() return Hex(_COLORS.class['MAGE']) end"
 	},
 	["classcolor:priest"] = {
-		["func"] = "function() return Hex(_COLORS.class['PRIEST']) end"
+		func = "function() return Hex(_COLORS.class['PRIEST']) end"
 	},
 	["classcolor:warlock"] = {
-		["func"] = "function() return Hex(_COLORS.class['WARLOCK']) end"
+		func = "function() return Hex(_COLORS.class['WARLOCK']) end"
 	},
 	["classcolor:shaman"] = {
-		["func"] = "function() return Hex(_COLORS.class['SHAMAN']) end"
+		func = "function() return Hex(_COLORS.class['SHAMAN']) end"
 	},
 	["classcolor:deathknight"] = {
-		["func"] = "function() return Hex(_COLORS.class['DEATHKNIGHT']) end"
+		func = "function() return Hex(_COLORS.class['DEATHKNIGHT']) end"
 	},
 	["classcolor:druid"] = {
-		["func"] = "function() return Hex(_COLORS.class['DRUID']) end"
+		func = "function() return Hex(_COLORS.class['DRUID']) end"
 	},
 	["classcolor:monk"] = {
-		["func"] = "function() return Hex(_COLORS.class['MONK']) end"
+		func = "function() return Hex(_COLORS.class['MONK']) end"
 	},
 	["classcolor:rogue"] = {
-		["func"] = "function() return Hex(_COLORS.class['ROGUE']) end"
+		func = "function() return Hex(_COLORS.class['ROGUE']) end"
 	},
 	["classcolor:demonhunter"] = {
-		["func"] = "function() return Hex(_COLORS.class['DEMONHUNTER']) end"
+		func = "function() return Hex(_COLORS.class['DEMONHUNTER']) end"
+	},
+	["classcolor:player"] = {
+		func = "function() return _VARS.E.myclass and Hex(_COLORS.class[_VARS.E.myclass]) or \"|cFFC2C2C2\" end"
 	},
 }
 
@@ -102,6 +105,8 @@ local function IsFuncStringValid(_, funcString)
 end
 
 local function oUF_CreateTag(tagTable)
+	if oUF.Tags.Methods[tagTable.name] then return end
+
 	oUF.Tags.Methods[tagTable.name] = tagTable.func
 	oUF.Tags:RefreshMethods(tagTable.name)
 
@@ -140,6 +145,9 @@ local function CreateTagGroup(tag)
 	E.Options.args.customtags.args.tagGroup.args[tag.name] = {
 		type = 'group',
 		name = tag.name,
+		get = function(info)
+			return tostring(E.global.CustomTags[info[#info - 1]] and E.global.CustomTags[info[#info - 1]][info[#info]] or G.CustomTags[info[#info - 1]][info[#info]]):gsub("\124", "\124\124")
+		end,
 		args = {
 			nameField = {
 				order = 1,
@@ -148,14 +156,14 @@ local function CreateTagGroup(tag)
 				name = 'Name',
 				disabled = isDefaultTag,
 				validate = function(info, value)
-					value = gsub(strtrim(value), '"', '\"')
+					value = strtrim(value):gsub("\124\124+", "\124")
 					return (value ~= info[#info - 1] and oUF.Tags.Methods[value]) and 'oUF: Name Taken' or true
 				end,
 				get = function(info)
 					return info[#info - 1]
 				end,
 				set = function(info, value)
-					value = strtrim(value):gsub('"', '\"')
+					value = strtrim(value):gsub("\124\124+", "\124")
 					if value ~= '' and value ~= info[#info - 1] then
 						if not E.global.CustomTags[value] then
 							E.global.CustomTags[value] = CopyTable(E.global.CustomTags[info[#info - 1]])
@@ -173,15 +181,14 @@ local function CreateTagGroup(tag)
 					end
 				end,
 			},
-			eventField = {
+			events = {
 				order = 2,
 				type = 'input',
 				width = 'full',
 				name = 'Events',
-				get = function(info) return E.global.CustomTags[info[#info - 1]].events end,
 				validate = IsEventStringValid,
 				set = function(info, value)
-					value = strtrim(value):gsub('"', '\"')
+					value = strtrim(value):gsub("\124\124+", "\124")
 					if E.global.CustomTags[info[#info - 1]].events ~= value then
 						if value ~= '' then
 							E.global.CustomTags[info[#info - 1]].events = value
@@ -195,16 +202,15 @@ local function CreateTagGroup(tag)
 					end
 				end,
 			},
-			varField = {
+			vars = {
 				order = 3,
 				type = 'input',
 				width = 'full',
 				name = 'Varibles',
 				multiline = 6,
 				validate = IsVarStringValid,
-				get = function(info) return E.global.CustomTags[info[#info - 1]].vars end,
 				set = function(info, value)
-					value = tonumber(value) or strtrim(value):gsub('"', '\"')
+					value = tonumber(value) or strtrim(value):gsub("\124\124+", "\124")
 					if E.global.CustomTags[info[#info - 1]].vars ~= value then
 						rawset(oUF.Tags.Vars, info[#info - 1], nil)
 
@@ -217,16 +223,15 @@ local function CreateTagGroup(tag)
 					end
 				end,
 			},
-			funcField = {
+			func = {
 				order = 4,
 				type = 'input',
 				width = 'full',
 				name = 'Function',
 				multiline = 12,
 				validate = IsFuncStringValid,
-				get = function(info) return E.global.CustomTags[info[#info - 1]].func end,
 				set = function(info, value)
-					value = strtrim(value):gsub('"', '\"')
+					value = strtrim(value):gsub("\124\124+", "\124")
 					if E.global.CustomTags[info[#info - 1]].func ~= value then
 						E.global.CustomTags[info[#info - 1]].func = value
 
@@ -272,14 +277,14 @@ local function CreateVarGroup(var)
 				width = 'full',
 				name = L['Name'],
 				validate = function(info, value)
-					value = strtrim(value):gsub('"', '\"')
+					value = strtrim(value):gsub("\124", "\124\124")
 					return (value ~= info[#info - 1] and oUF.Tags.Vars[value]) and L['Name Taken'] or true
 				end,
 				get = function(info)
 					return info[#info - 1]
 				end,
 				set = function(info, value)
-					value = strtrim(value):gsub('"', '\"')
+					value = strtrim(value):gsub("\124\124+", "\124")
 					if value ~= '' and value ~= info[#info - 1] then
 						if not E.global.CustomVars[value] then
 							E.global.CustomVars[value] = E.global.CustomVars[info[#info - 1]]
@@ -308,7 +313,7 @@ local function CreateVarGroup(var)
 					return tostring(E.global.CustomVars[info[#info - 1]].value):gsub('"', '\"')
 				end,
 				set = function(info, value)
-					value = tonumber(value) or strtrim(value):gsub('"', '\"')
+					value = tonumber(value) or strtrim(value):gsub("\124\124+", "\124")
 					if E.global.CustomVars[info[#info - 1]].value ~= value then
 						oUF.Tags.Vars[info[#info - 1]].value = nil
 
@@ -362,10 +367,10 @@ local function GetOptions()
 						type = 'group',
 						name = 'New Tag',
 						get = function(info)
-							return tostring(newTagInfo[info[#info]]):gsub('"', '\"')
+							return tostring(newTagInfo[info[#info]]):gsub("\124", "\124\124")
 						end,
 						set = function(info, value)
-							newTagInfo[info[#info]] = strtrim(value):gsub('"', '\"')
+							newTagInfo[info[#info]] = strtrim(value):gsub("\124\124+", "\124")
 						end,
 						args = {
 							name = {
@@ -374,7 +379,7 @@ local function GetOptions()
 								width = 'full',
 								name = 'Name',
 								validate = function(_, value)
-									value = strtrim(value):gsub('"', '\"')
+									value = strtrim(value):gsub("\124\124+", "\124")
 									return oUF.Tags.Methods[value] and 'oUF: Name Taken - '..value or true
 								end,
 							},
@@ -393,7 +398,7 @@ local function GetOptions()
 								multiline = 6,
 								validate = IsVarStringValid,
 								set = function(_, value)
-									newTagInfo.vars = tonumber(value) or strtrim(value):gsub('"', '\"')
+									newTagInfo.vars = tonumber(value) or strtrim(value):gsub("\124\124+", "\124")
 								end,
 							},
 							func = {
@@ -442,7 +447,7 @@ local function GetOptions()
 						type = 'group',
 						name = 'New Variable',
 						get = function(info)
-							return tostring(newVarInfo[info[#info]]):gsub('\124', '\124\124')
+							return tostring(newVarInfo[info[#info]]):gsub("\124", "\124\124")
 						end,
 						args = {
 							name = {
@@ -451,11 +456,11 @@ local function GetOptions()
 								width = 'full',
 								name = L['Name'],
 								validate = function(info, value)
-									value = strtrim(value):gsub('"', '\"')
+									value = strtrim(value):gsub("\124\124+", "\124")
 									return oUF.Tags.Vars[value] and L['Name Taken'] or true
 								end,
 								set = function(_, value)
-									newVarInfo.name = strtrim(value):gsub('"', '\"')
+									newVarInfo.name = strtrim(value):gsub("\124\124+", "\124")
 								end,
 							},
 							value = {
@@ -466,7 +471,7 @@ local function GetOptions()
 								multiline = 16,
 								validate = IsVarStringValid,
 								set = function(_, value)
-									newVarInfo.value = tonumber(value) or strtrim(value):gsub('"', '\"')
+									newVarInfo.value = tonumber(value) or strtrim(value):gsub("\124\124+", "\124")
 								end,
 							},
 							add = {
@@ -526,8 +531,12 @@ local function Initialize()
 	end
 
 	-- Build Saved Tags
-	for _, TagTable in next, E.global.CustomTags do
-		oUF_CreateTag(TagTable)
+	for Tag, TagTable in next, E.global.CustomTags do
+		if oUF.Tags.Methods[Tag] then
+			E.global.CustomTags[Tag] = nil
+		else
+			oUF_CreateTag(TagTable)
+		end
 	end
 
 	-- Build Default Saved Variables
@@ -536,8 +545,12 @@ local function Initialize()
 	end
 
 	-- Build Saved Variables
-	for _, VarTable in next, E.global.CustomVars do
-		oUF_CreateVar(VarTable)
+	for Var, VarTable in next, E.global.CustomVars do
+		if oUF.Tags.Vars[Var] then
+			E.global.CustomTags[Var] = nil
+		else
+			oUF_CreateVar(VarTable)
+		end
 	end
 
 	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)

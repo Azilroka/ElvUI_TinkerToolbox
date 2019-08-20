@@ -1,6 +1,5 @@
 local E, _, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local L = E.Libs.ACL:GetLocale('ElvUI', E.global.general.locale or 'enUS')
-local CT = E:NewModule('CustomTags');
 local oUF = E.oUF
 
 local wipe = wipe
@@ -17,10 +16,12 @@ local next = next
 local concat = table.concat
 local CopyTable = CopyTable
 local tostring = tostring
+local strlower = strlower
 
 local badEvents = {}
 local newTagInfo = { name = '', events = '', vars = '', func = '' }
 local newVarInfo = { name = '', value = '' }
+local copyTagInfo = { fromTag = '', toTag = ''}
 
 local validator = CreateFrame('Frame')
 
@@ -100,8 +101,8 @@ local function oUF_DeleteTag(tag)
 	oUF.Tags:RefreshMethods(tag)
 end
 
-local function oUF_CreateVar(varTable)
-	oUF.Tags.Vars[varTable.name] = varTable.value
+local function oUF_CreateVar(var, varValue)
+	oUF.Tags.Vars[var] = varValue
 end
 
 local function oUF_DeleteVar(var)
@@ -255,9 +256,9 @@ local function DeleteVarGroup(var)
 end
 
 local function CreateVarGroup(var)
-	E.Options.args.customtags.args.varGroup.args[var.name] = {
+	E.Options.args.customtags.args.varGroup.args[var] = {
 		type = 'group',
-		name = var.name,
+		name = var,
 		args = {
 			name = {
 				order = 1,
@@ -276,13 +277,12 @@ local function CreateVarGroup(var)
 					if value ~= '' and value ~= info[#info - 1] then
 						if not E.global.CustomVars[value] then
 							E.global.CustomVars[value] = E.global.CustomVars[info[#info - 1]]
-							E.global.CustomVars[value].name = value
 							E.global.CustomVars[info[#info - 1]] = nil
 
-							oUF_CreateVar(E.global.CustomVars[value])
+							oUF_CreateVar(value)
 							oUF_DeleteVar(info[#info - 1])
 
-							CreateVarGroup(E.global.CustomVars[value])
+							CreateVarGroup(value)
 							DeleteVarGroup(info[#info - 1])
 
 							E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', value)
@@ -298,16 +298,16 @@ local function CreateVarGroup(var)
 				multiline = 12,
 				validate = IsVarStringValid,
 				get = function(info)
-					return tostring(E.global.CustomVars[info[#info - 1]].value):gsub('"', '\"')
+					return tostring(E.global.CustomVars[info[#info - 1]]):gsub("\124", "\124\124")
 				end,
 				set = function(info, value)
 					value = tonumber(value) or strtrim(value):gsub("\124\124+", "\124")
-					if E.global.CustomVars[info[#info - 1]].value ~= value then
-						oUF.Tags.Vars[info[#info - 1]].value = nil
+					if E.global.CustomVars[info[#info - 1]] ~= value then
+						rawset(oUF.Tags.Vars, info[#info - 1], nil)
 
 						if value ~= '' then
-							E.global.CustomVars[info[#info - 1]].value = value
-							oUF.Tags.Vars[info[#info - 1].name] = value
+							E.global.CustomVars[info[#info - 1]] = value
+							oUF.Tags.Vars[info[#info - 1]] = value
 						else
 							E.global.CustomVars[info[#info - 1]] = nil
 						end
@@ -402,23 +402,74 @@ local function GetOptions()
 								type = 'execute',
 								name = 'Add',
 								width = 'full',
+								hidden = function() return (newTagInfo.name == '' and newTagInfo.func == '') end,
 								func = function()
-									if newTagInfo.name ~= '' and newTagInfo.func ~= '' then
-										E.global.CustomTags[newTagInfo.name] = {
-											name = newTagInfo.name,
-											events = newTagInfo.events,
-											vars = newTagInfo.vars,
-											func = newTagInfo.func
-										}
+									E.global.CustomTags[newTagInfo.name] = {
+										name = newTagInfo.name,
+										events = newTagInfo.events,
+										vars = newTagInfo.vars,
+										func = newTagInfo.func
+									}
 
-										oUF_CreateTag(newTagInfo)
+									oUF_CreateTag(newTagInfo)
 
-										CreateTagGroup(newTagInfo)
+									CreateTagGroup(newTagInfo)
 
-										E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name)
+									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name)
 
-										newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func = '', '', '', ''
-									end
+									newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func = '', '', '', ''
+								end,
+							},
+						},
+					},
+					copyTag = {
+						order = 1,
+						type = 'group',
+						name = 'Copy Tag',
+						get = function(info)
+							return tostring(copyTagInfo[info[#info]]):gsub("\124", "\124\124")
+						end,
+						set = function(info, value)
+							copyTagInfo[info[#info]] = strtrim(value):gsub("\124\124+", "\124")
+						end,
+						args = {
+							fromTag = {
+								order = 1,
+								type = 'input',
+								width = 'full',
+								name = 'From Tag',
+								validate = function(_, value)
+									value = strtrim(value):gsub("\124\124+", "\124")
+									return (value ~= '' and not oUF.Tags.Methods[value] and 'oUF: Tag Not Found : '..value) or true
+								end,
+								validatePopup = true,
+							},
+							toTag = {
+								order = 2,
+								type = 'input',
+								width = 'full',
+								name = 'To Tag',
+								validate = function(_, value)
+									value = strtrim(value):gsub("\124\124+", "\124")
+									return oUF.Tags.Methods[value] and 'oUF: Name Taken : '..value or true
+								end,
+							},
+							add = {
+								order = 5,
+								type = 'execute',
+								name = 'Copy',
+								width = 'full',
+								hidden = function() return (copyTagInfo.fromTag == '' and copyTagInfo.toTag == '') end,
+								func = function()
+									E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag])
+									E.global.CustomTags[copyTagInfo.toTag].name = copyTagInfo.toTag
+
+									oUF_CreateTag(E.global.CustomTags[copyTagInfo.toTag])
+									CreateTagGroup(E.global.CustomTags[copyTagInfo.toTag])
+
+									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', copyTagInfo.toTag)
+
+									copyTagInfo.fromTag, copyTagInfo.toTag = '', ''
 								end,
 							},
 						},
@@ -469,14 +520,10 @@ local function GetOptions()
 								width = 'full',
 								func = function()
 									if newVarInfo.name ~= '' then
-										E.global.CustomVars[newVarInfo.name] = {
-											name = newVarInfo.name,
-											value = newVarInfo.value
-										}
-
+										E.global.CustomVars[newVarInfo.name] = newVarInfo.value
 										oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value
 
-										CreateVarGroup(newVarInfo)
+										CreateVarGroup(newVarInfo.name, newVarInfo.value)
 
 										E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name)
 
@@ -502,17 +549,27 @@ local function GetOptions()
 	end
 
 	-- Default Custom Variables
-	for _, VarTable in next, G.CustomVars do
-		CreateVarGroup(VarTable)
+	for Var in next, G.CustomVars do
+		CreateVarGroup(Var)
 	end
 
 	-- Saved Custom Variables
-	for _, VarTable in next, E.global.CustomVars do
-		CreateVarGroup(VarTable)
+	for Var in next, E.global.CustomVars do
+		CreateVarGroup(Var)
 	end
 end
 
 local function Initialize()
+	-- Build Default Custom Variables
+	for Var, VarValue in next, G.CustomVars do
+		pcall(oUF_CreateVar, Var, VarValue)
+	end
+
+	-- Build Saved Custom Variables
+	for Var, VarValue in next, E.global.CustomVars do
+		pcall(oUF_CreateVar, Var, VarValue)
+	end
+
 	-- Build Default Custom Tags
 	for _, TagTable in next, G.CustomTags do
 		pcall(oUF_CreateTag, TagTable)
@@ -523,17 +580,7 @@ local function Initialize()
 		pcall(oUF_CreateTag, TagTable)
 	end
 
-	-- Build Default Saved Variables
-	for _, VarTable in next, G.CustomVars do
-		pcall(oUF_CreateVar, VarTable)
-	end
-
-	-- Build Saved Variables
-	for _, VarTable in next, E.global.CustomVars do
-		pcall(oUF_CreateVar, VarTable)
-	end
-
 	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)
 end
 
-E:RegisterModule(CT:GetName(), Initialize)
+hooksecurefunc(E, 'Initialize', Initialize)

@@ -518,17 +518,16 @@ local function GetOptions()
 								type = 'execute',
 								name = L['Add'],
 								width = 'full',
+								hidden = function() return (newVarInfo.name == '' and newVarInfo.value == '') end,
 								func = function()
-									if newVarInfo.name ~= '' then
-										E.global.CustomVars[newVarInfo.name] = newVarInfo.value
-										oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value
+									E.global.CustomVars[newVarInfo.name] = newVarInfo.value
+									oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value
 
-										CreateVarGroup(newVarInfo.name, newVarInfo.value)
+									CreateVarGroup(newVarInfo.name, newVarInfo.value)
 
-										E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name)
+									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name)
 
-										newVarInfo.name, newVarInfo.value = '', ''
-									end
+									newVarInfo.name, newVarInfo.value = '', ''
 								end,
 							},
 						},

@@ -105,20 +105,20 @@ for textFormatStyle, textFormat in next, formattedText do
 		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 	G.CustomTags[format("power:%s:hidefull:hidezero", textFormat)] = {
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 	G.CustomTags[format("power:%s:hidedead", textFormat)] = {
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH",
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 	G.CustomTags[format("power:%s:hidezero", textFormat)] = {
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not (min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not (min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 	G.CustomTags[format("power:%s:hidefull", textFormat)] = {
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 end
 

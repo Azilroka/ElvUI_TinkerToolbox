@@ -1,5 +1,4 @@
 local E, _, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
-local L = E.Libs.ACL:GetLocale('ElvUI', E.global.general.locale or 'enUS')
 local oUF = E.oUF
 
 local wipe = wipe
@@ -23,28 +22,127 @@ local newTagInfo = { name = '', events = '', vars = '', func = '' }
 local newVarInfo = { name = '', value = '' }
 local copyTagInfo = { fromTag = '', toTag = ''}
 
+local formattedText = { CURRENT = 'current', CURRENT_PERCENT = 'current-percent', PERCENT = 'percent' }
 local validator = CreateFrame('Frame')
+
+local L = E.Libs.ACL:NewLocale("ElvUI", "enUS", true, true)
+
+L['Custom Variables'] = true
+L['Custom Tags'] = true
+
+L['New Tag'] = true
+L['Copy Tag'] = true
+L['From Tag'] = true
+L['To Tag'] = true
+
+L['Name Taken'] = true
+
+L['New Variable'] = true
+
+L['Name'] = true
+L['Value'] = true
+L['Variables'] = true
+L['Add'] = true
+L['Delete'] = true
+L['Copy'] = true
+L['Events'] = true
+L['Defaults'] = true
+
+L = E.Libs.ACL:GetLocale("ElvUI", "enUS")
 
 G.CustomTags = {
 	["classcolor:player"] = {
 		func = "function() return Hex(_COLORS.class[_VARS.E.myclass or 'PRIEST']) end"
 	},
+	["deficit:name:colors"] = {
+		func = "function(unit)\n    local missinghp = _TAGS['missinghp'](unit)\n    local String\n\n    if missinghp then\n        local healthcolor = _TAGS['healthcolor'](unit)\n        String = format(\"%s-%s|r\", healthcolor, missinghp)\n    else\n        local name = _TAGS['name'](unit)\n        local namecolor = _TAGS['namecolor'](unit)\n        String = format(\"%s%s|r\", namecolor, name)\n    end\n\n    return String\nend",
+		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_NAME_UPDATE",
+	},
+	["name:custom:length"] = {
+		events = "UNIT_NAME_UPDATE",
+		func = "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and _VARS.E:ShortenString(name,_VARS['name:custom:length']) or nil\nend",
+		vars = 5,
+	},
+	["name:custom:abbreviate"] = {
+		events = "UNIT_NAME_UPDATE",
+		func = "function(unit)\n    local name = UnitName(unit)\n\n    if name and string.len(name) > _VARS['name:custom:abbreviate'] then\n        name = name:gsub('(%S+) ', function(t) return t:sub(1,1)..'. ' end)\n    end\n\n    return name\nend",
+		vars = 16,
+	},
+	["num:targeting"] = {
+		events = "UNIT_TARGET PLAYER_TARGET_CHANGED GROUP_ROSTER_UPDATE",
+		func = "function(unit)\n    if not IsInGroup() then return nil end\n    local targetedByNum = 0\n\n    for i = 1, GetNumGroupMembers() do\n        local groupUnit = (IsInRaid() and \"raid\"..i or \"party\"..i);\n        if (UnitIsUnit(groupUnit..\"target\", unit) and not UnitIsUnit(groupUnit, \"player\")) then\n            targetedByNum = targetedByNum + 1\n        end\n    end\n\n    if UnitIsUnit(\"playertarget\", unit) then\n        targetedByNum = targetedByNum + 1\n    end\n\n    return (targetedByNum > 0 and targetedByNum or nil)\nend",
+	},
+	["name:lower"] = {
+		events = "UNIT_NAME_UPDATE",
+		func = "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and strlower(name) or ''\nend",
+	},
+	["name:caps"] = {
+		events = "UNIT_NAME_UPDATE",
+		func = "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and strupper(name) or ''\nend",
+	},
 }
+
+--[[
+	[faction:icon] - Displays a Horde or Alliance icon based on the units faction.
+]]
 
 -- Class Colors
 for CLASS in next, RAID_CLASS_COLORS do
 	G.CustomTags[format("classcolor:%s", strlower(CLASS))] = { func = format("function() return Hex(_COLORS.class['%s']) end", CLASS) }
 end
 
+for textFormatStyle, textFormat in next, formattedText do
+	G.CustomTags[format("health:%s:hidefull", textFormat)] = {
+		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH",
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E.GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle)
+	}
+	G.CustomTags[format("health:%s:hidedead", textFormat)] = {
+		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION",
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E.GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle)
+	}
+	G.CustomTags[format("health:%s:hidefull:hidedead", textFormat)] = {
+		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION",
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+	}
+	G.CustomTags[format("power:%s:hidefull:hidezero", textFormat)] = {
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+	}
+	G.CustomTags[format("power:%s:hidedead", textFormat)] = {
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH",
+	}
+	G.CustomTags[format("power:%s:hidezero", textFormat)] = {
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not (min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+	}
+	G.CustomTags[format("power:%s:hidefull", textFormat)] = {
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+	}
+end
+
 -- Complete Table
-for TagName, Table in next, G.CustomTags do
-	if not Table['name'] then Table.name = TagName end
-	if not Table['func'] then Table.func = "function() end" end
+for _, Table in next, G.CustomTags do
 	if not Table['events'] then Table.events = '' end
 	if not Table['vars'] then Table.vars = '' end
 end
 
 G.CustomVars = {}
+
+local function AreTableEquals(currentTable, defaultTable)
+	for option, value in pairs(defaultTable) do
+		if type(value) == 'table' then
+			value = AreTableEquals(currentTable[option], value)
+		end
+
+		if currentTable[option] ~= value then
+			return false
+		end
+	end
+
+	return true
+end
 
 local function isDefaultTag(info)
 	return G.CustomTags[info[#info - 1]]
@@ -76,20 +174,21 @@ local function IsFuncStringValid(_, funcString)
 	return err or true
 end
 
-local function oUF_CreateTag(tagTable)
-	if oUF.Tags.Methods[tagTable.name] then return end
+local function oUF_CreateTag(tagName, tagTable)
+	if oUF.Tags.Methods[tagName] then return end
 
-	oUF.Tags.Methods[tagTable.name] = tagTable.func
-	oUF.Tags:RefreshMethods(tagTable.name)
-
-	if tagTable.events then
-		oUF.Tags.Events[tagTable.name] = tagTable.events
-		oUF.Tags:RefreshEvents(tagTable.name)
-	end
+	oUF.Tags.Methods[tagName] = tagTable.func
 
 	if tagTable.vars then
-		oUF.Tags.Vars[tagTable.name] = tagTable.vars
+		oUF.Tags.Vars[tagName] = tagTable.vars
 	end
+
+	if tagTable.events then
+		oUF.Tags.Events[tagName] = tagTable.events
+	end
+
+	oUF.Tags:RefreshMethods(tagName)
+	oUF.Tags:RefreshEvents(tagName)
 end
 
 local function oUF_DeleteTag(tag)
@@ -114,9 +213,9 @@ local function DeleteTagGroup(tag)
 end
 
 local function CreateTagGroup(tag)
-	E.Options.args.customtags.args.tagGroup.args[tag.name] = {
+	E.Options.args.customtags.args.tagGroup.args[tag] = {
 		type = 'group',
-		name = tag.name,
+		name = tag,
 		get = function(info)
 			return tostring(E.global.CustomTags[info[#info - 1]] and E.global.CustomTags[info[#info - 1]][info[#info]] or G.CustomTags[info[#info - 1]][info[#info]]):gsub("\124", "\124\124")
 		end,
@@ -125,11 +224,11 @@ local function CreateTagGroup(tag)
 				order = 1,
 				type = 'input',
 				width = 'full',
-				name = 'Name',
+				name = L['Name'],
 				disabled = isDefaultTag,
 				validate = function(info, value)
 					value = strtrim(value):gsub("\124\124+", "\124")
-					return (value ~= info[#info - 1] and oUF.Tags.Methods[value]) and 'oUF: Name Taken' or true
+					return (value ~= info[#info - 1] and oUF.Tags.Methods[value]) and L['Name Taken'] or true
 				end,
 				get = function(info)
 					return info[#info - 1]
@@ -139,10 +238,9 @@ local function CreateTagGroup(tag)
 					if value ~= '' and value ~= info[#info - 1] then
 						if not E.global.CustomTags[value] then
 							E.global.CustomTags[value] = CopyTable(E.global.CustomTags[info[#info - 1]])
-							E.global.CustomTags[value].name = value
 
-							oUF_CreateTag(E.global.CustomTags[value])
-							CreateTagGroup(E.global.CustomTags[value])
+							oUF_CreateTag(value, E.global.CustomTags[value])
+							CreateTagGroup(value, E.global.CustomTags[value])
 
 							E.global.CustomTags[info[#info - 1]] = nil
 							oUF_DeleteTag(info[#info - 1])
@@ -157,7 +255,7 @@ local function CreateTagGroup(tag)
 				order = 2,
 				type = 'input',
 				width = 'full',
-				name = 'Events',
+				name = L['Events'],
 				validate = IsEventStringValid,
 				set = function(info, value)
 					value = strtrim(value):gsub("\124\124+", "\124")
@@ -178,7 +276,7 @@ local function CreateTagGroup(tag)
 				order = 3,
 				type = 'input',
 				width = 'full',
-				name = 'Varibles',
+				name = L['Variables'],
 				multiline = 6,
 				validate = IsVarStringValid,
 				set = function(info, value)
@@ -192,6 +290,8 @@ local function CreateTagGroup(tag)
 						else
 							E.global.CustomTags[info[#info - 1]].vars = nil
 						end
+
+						oUF.Tags:RefreshMethods(info[#info - 1])
 					end
 				end,
 			},
@@ -199,7 +299,7 @@ local function CreateTagGroup(tag)
 				order = 4,
 				type = 'input',
 				width = 'full',
-				name = 'Function',
+				name = L['Function'],
 				multiline = 12,
 				validate = IsFuncStringValid,
 				set = function(info, value)
@@ -217,7 +317,7 @@ local function CreateTagGroup(tag)
 			delete = {
 				order = 5,
 				type = 'execute',
-				name = 'Delete',
+				name = L['Delete'],
 				width = 'full',
 				confirm = true,
 				hidden = isDefaultTag,
@@ -238,7 +338,7 @@ local function CreateTagGroup(tag)
 				width = "full",
 				confirm = true,
 				hidden = function(info)
-					return not isDefaultTag(info)
+					return (not isDefaultTag(info)) or (isDefaultTag(info) and AreTableEquals(E.global.CustomTags[info[#info - 1]], G.CustomTags[info[#info - 1]]))
 				end,
 				func = function(info)
 					E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]])
@@ -336,24 +436,19 @@ end
 local function GetOptions()
 	E.Options.args.customtags = {
 		type = 'group',
-		name = 'oUF Controls',
+		name = L['Custom Tags'],
 		order = -10,
 		childGroups = 'tab',
 		args = {
-			header = {
-				order = 0,
-				type = 'header',
-				name = 'Custom Tags',
-			},
 			tagGroup = {
 				type = 'group',
 				order = 1,
-				name = 'Custom Tags',
+				name = L['Custom Tags'],
 				args = {
 					newTag = {
 						order = 0,
 						type = 'group',
-						name = 'New Tag',
+						name = L['New Tag'],
 						get = function(info)
 							return tostring(newTagInfo[info[#info]]):gsub("\124", "\124\124")
 						end,
@@ -365,7 +460,7 @@ local function GetOptions()
 								order = 1,
 								type = 'input',
 								width = 'full',
-								name = 'Name',
+								name = L['Name'],
 								validate = function(_, value)
 									value = strtrim(value):gsub("\124\124+", "\124")
 									return oUF.Tags.Methods[value] and 'oUF: Name Taken - '..value or true
@@ -375,14 +470,14 @@ local function GetOptions()
 								order = 2,
 								type = 'input',
 								width = 'full',
-								name = 'Events',
+								name = L['Events'],
 								validate = IsEventStringValid,
 							},
 							vars = {
 								order = 3,
 								type = 'input',
 								width = 'full',
-								name = 'Varibles',
+								name = L['Variables'],
 								multiline = 6,
 								validate = IsVarStringValid,
 								set = function(_, value)
@@ -393,27 +488,26 @@ local function GetOptions()
 								order = 4,
 								type = 'input',
 								width = 'full',
-								name = 'Function',
+								name = L['Function'],
 								multiline = 12,
 								validate = IsFuncStringValid,
 							},
 							add = {
 								order = 5,
 								type = 'execute',
-								name = 'Add',
+								name = L['Add'],
 								width = 'full',
-								hidden = function() return (newTagInfo.name == '' and newTagInfo.func == '') end,
+								hidden = function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end,
 								func = function()
 									E.global.CustomTags[newTagInfo.name] = {
-										name = newTagInfo.name,
 										events = newTagInfo.events,
 										vars = newTagInfo.vars,
 										func = newTagInfo.func
 									}
 
-									oUF_CreateTag(newTagInfo)
+									oUF_CreateTag(newTagInfo.name, newTagInfo)
 
-									CreateTagGroup(newTagInfo)
+									CreateTagGroup(newTagInfo.name, newTagInfo)
 
 									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name)
 
@@ -425,7 +519,7 @@ local function GetOptions()
 					copyTag = {
 						order = 1,
 						type = 'group',
-						name = 'Copy Tag',
+						name = L['Copy Tag'],
 						get = function(info)
 							return tostring(copyTagInfo[info[#info]]):gsub("\124", "\124\124")
 						end,
@@ -437,7 +531,7 @@ local function GetOptions()
 								order = 1,
 								type = 'input',
 								width = 'full',
-								name = 'From Tag',
+								name = L['From Tag'],
 								validate = function(_, value)
 									value = strtrim(value):gsub("\124\124+", "\124")
 									return (value ~= '' and not oUF.Tags.Methods[value] and 'oUF: Tag Not Found : '..value) or true
@@ -448,7 +542,7 @@ local function GetOptions()
 								order = 2,
 								type = 'input',
 								width = 'full',
-								name = 'To Tag',
+								name = L['To Tag'],
 								validate = function(_, value)
 									value = strtrim(value):gsub("\124\124+", "\124")
 									return oUF.Tags.Methods[value] and 'oUF: Name Taken : '..value or true
@@ -457,15 +551,14 @@ local function GetOptions()
 							add = {
 								order = 5,
 								type = 'execute',
-								name = 'Copy',
+								name = L['Copy'],
 								width = 'full',
-								hidden = function() return (copyTagInfo.fromTag == '' and copyTagInfo.toTag == '') end,
+								hidden = function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end,
 								func = function()
 									E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag])
-									E.global.CustomTags[copyTagInfo.toTag].name = copyTagInfo.toTag
 
-									oUF_CreateTag(E.global.CustomTags[copyTagInfo.toTag])
-									CreateTagGroup(E.global.CustomTags[copyTagInfo.toTag])
+									oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag])
+									CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag])
 
 									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', copyTagInfo.toTag)
 
@@ -479,12 +572,12 @@ local function GetOptions()
 			varGroup = {
 				type = 'group',
 				order = 1,
-				name = 'Custom Variables',
+				name = L['Custom Variables'],
 				args = {
 					newVar ={
 						order = 0,
 						type = 'group',
-						name = 'New Variable',
+						name = L['New Variable'],
 						get = function(info)
 							return tostring(newVarInfo[info[#info]]):gsub("\124", "\124\124")
 						end,
@@ -518,7 +611,7 @@ local function GetOptions()
 								type = 'execute',
 								name = L['Add'],
 								width = 'full',
-								hidden = function() return (newVarInfo.name == '' and newVarInfo.value == '') end,
+								hidden = function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end,
 								func = function()
 									E.global.CustomVars[newVarInfo.name] = newVarInfo.value
 									oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value
@@ -538,13 +631,13 @@ local function GetOptions()
 	}
 
 	-- Default Custom Tags
-	for _, TagTable in next, G.CustomTags do
-		CreateTagGroup(TagTable)
+	for Tag in next, G.CustomTags do
+		CreateTagGroup(Tag)
 	end
 
 	-- Saved Custom Tags
-	for _, TagTable in next, E.global.CustomTags do
-		CreateTagGroup(TagTable)
+	for Tag in next, E.global.CustomTags do
+		CreateTagGroup(Tag)
 	end
 
 	-- Default Custom Variables
@@ -560,23 +653,23 @@ end
 
 local function Initialize()
 	-- Build Default Custom Variables
-	for Var, VarValue in next, G.CustomVars do
-		pcall(oUF_CreateVar, Var, VarValue)
+	for VarName, VarValue in next, G.CustomVars do
+		pcall(oUF_CreateVar, VarName, VarValue)
 	end
 
 	-- Build Saved Custom Variables
-	for Var, VarValue in next, E.global.CustomVars do
-		pcall(oUF_CreateVar, Var, VarValue)
+	for VarName, VarValue in next, E.global.CustomVars do
+		pcall(oUF_CreateVar, VarName, VarValue)
 	end
 
 	-- Build Default Custom Tags
-	for _, TagTable in next, G.CustomTags do
-		pcall(oUF_CreateTag, TagTable)
+	for TagName, TagTable in next, G.CustomTags do
+		pcall(oUF_CreateTag, TagName, TagTable)
 	end
 
 	-- Build Saved Tags
-	for _, TagTable in next, E.global.CustomTags do
-		pcall(oUF_CreateTag, TagTable)
+	for TagName, TagTable in next, E.global.CustomTags do
+		pcall(oUF_CreateTag, TagName, TagTable)
 	end
 
 	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)

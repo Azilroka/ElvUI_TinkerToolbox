@@ -18,7 +18,7 @@ local tostring = tostring
 local strlower = strlower
 
 local badEvents = {}
-local newTagInfo = { category = '', name = '', events = '', vars = '', func = '' }
+local newTagInfo = { category = '', description = '', name = '', events = '', vars = '', func = '' }
 local newVarInfo = { name = '', value = '' }
 local copyTagInfo = { fromTag = '', toTag = ''}
 
@@ -71,7 +71,7 @@ G.CustomTags = {
 	},
 	["num:targeting"] = {
 		events = "UNIT_TARGET PLAYER_TARGET_CHANGED GROUP_ROSTER_UPDATE",
-		func = "function(unit)\n    if not IsInGroup() then return nil end\n    local targetedByNum = 0\n\n    for i = 1, GetNumGroupMembers() do\n        local groupUnit = (IsInRaid() and \"raid\"..i or \"party\"..i);\n        if (UnitIsUnit(groupUnit..\"target\", unit) and not UnitIsUnit(groupUnit, \"player\")) then\n            targetedByNum = targetedByNum + 1\n        end\n    end\n\n    if UnitIsUnit(\"playertarget\", unit) then\n        targetedByNum = targetedByNum + 1\n    end\n\n    return (targetedByNum > 0 and targetedByNum or nil)\nend",
+		func = "function(unit)\n    if not IsInGroup() then return nil end\n    local targetedByNum = 0\n\n    for i = 1, GetNumGroupMembers() do\n        local groupUnit = (IsInRaid() and 'raid'..i or 'party'..i);\n        if (UnitIsUnit(groupUnit..'target', unit) and not UnitIsUnit(groupUnit, 'player')) then\n            targetedByNum = targetedByNum + 1\n        end\n    end\n\n    if UnitIsUnit(\"playertarget\", unit) then\n        targetedByNum = targetedByNum + 1\n    end\n\n    return (targetedByNum > 0 and targetedByNum or nil)\nend",
 	},
 	["name:lower"] = {
 		events = "UNIT_NAME_UPDATE",
@@ -83,10 +83,6 @@ G.CustomTags = {
 	},
 }
 
---[[
-	[faction:icon] - Displays a Horde or Alliance icon based on the units faction.
-]]
-
 -- Class Colors
 for CLASS in next, RAID_CLASS_COLORS do
 	G.CustomTags[format("classcolor:%s", strlower(CLASS))] = { func = format("function() return Hex(_COLORS.class['%s']) end", CLASS) }
@@ -95,31 +91,27 @@ end
 for textFormatStyle, textFormat in next, formattedText do
 	G.CustomTags[format("health:%s:hidefull", textFormat)] = {
 		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E.GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle)
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle)
 	}
 	G.CustomTags[format("health:%s:hidedead", textFormat)] = {
 		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E.GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle)
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle)
 	}
 	G.CustomTags[format("health:%s:hidefull:hidedead", textFormat)] = {
 		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
-	G.CustomTags[format("power:%s:hidefull:hidezero", textFormat)] = {
+	G.CustomTags[format("power:%s:hide", textFormat)] = {
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 	G.CustomTags[format("power:%s:hidedead", textFormat)] = {
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("power:%s:hidezero", textFormat)] = {
-		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not (min <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 	G.CustomTags[format("power:%s:hidefull", textFormat)] = {
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = GetFormattedText(min, max, '%s', true)\n    end\n\n    return String\nend", textFormatStyle),
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 end
 
@@ -170,6 +162,8 @@ local function IsFuncStringValid(_, funcString)
 end
 
 local function oUF_CreateTag(tagName, tagTable)
+	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')
+
 	if oUF.Tags.Methods[tagName] then return end
 
 	oUF.Tags.Methods[tagName] = tagTable.func
@@ -248,18 +242,24 @@ local function CreateTagGroup(tag)
 			},
 			category = {
 				order = 1,
-				type = 'select',
+				type = 'input',
 				width = 'full',
 				name = L['Category'],
-				values = {},
 				set = function(info, value)
-					value = gsub(strtrim(value), "\124\124+", "\124")
-					if value ~= '' and value ~= info[#info - 1] then
-					end
+					E.global.CustomTags[info[#info - 1]].category = gsub(strtrim(value), "\124\124+", "\124")
+				end,
+			},
+			description = {
+				order = 2,
+				type = 'input',
+				width = 'full',
+				name = L['Description'],
+				set = function(info, value)
+					E.global.CustomTags[info[#info - 1]].description = gsub(strtrim(value), "\124\124+", "\124")
 				end,
 			},
 			events = {
-				order = 2,
+				order = 3,
 				type = 'input',
 				width = 'full',
 				name = L['Events'],
@@ -280,7 +280,7 @@ local function CreateTagGroup(tag)
 				end,
 			},
 			vars = {
-				order = 3,
+				order = 4,
 				type = 'input',
 				width = 'full',
 				name = L['Variables'],
@@ -303,7 +303,7 @@ local function CreateTagGroup(tag)
 				end,
 			},
 			func = {
-				order = 4,
+				order = 5,
 				type = 'input',
 				width = 'full',
 				name = L['Function'],
@@ -322,7 +322,7 @@ local function CreateTagGroup(tag)
 				end,
 			},
 			delete = {
-				order = 5,
+				order = 6,
 				type = 'execute',
 				name = L['Delete'],
 				width = 'full',
@@ -340,7 +340,7 @@ local function CreateTagGroup(tag)
 			},
 			reset = {
 				type = "execute",
-				order = 6,
+				order = 7,
 				name = L["Defaults"],
 				width = "full",
 				confirm = true,
@@ -479,15 +479,21 @@ local function GetOptions()
 								width = 'full',
 								name = L['Category'],
 							},
-							events = {
+							discription = {
 								order = 2,
+								type = 'input',
+								width = 'full',
+								name = L['Discription'],
+							},
+							events = {
+								order = 3,
 								type = 'input',
 								width = 'full',
 								name = L['Events'],
 								validate = IsEventStringValid,
 							},
 							vars = {
-								order = 3,
+								order = 4,
 								type = 'input',
 								width = 'full',
 								name = L['Variables'],
@@ -498,7 +504,7 @@ local function GetOptions()
 								end,
 							},
 							func = {
-								order = 4,
+								order = 5,
 								type = 'input',
 								width = 'full',
 								name = L['Function'],
@@ -506,7 +512,7 @@ local function GetOptions()
 								validate = IsFuncStringValid,
 							},
 							add = {
-								order = 5,
+								order = 6,
 								type = 'execute',
 								name = L['Add'],
 								width = 'full',
@@ -521,7 +527,7 @@ local function GetOptions()
 
 									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name)
 
-									newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func = '', '', '', ''
+									newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', ''
 								end,
 							},
 						},
@@ -684,5 +690,6 @@ local function Initialize()
 
 	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)
 end
+
 
 hooksecurefunc(E, 'Initialize', Initialize)

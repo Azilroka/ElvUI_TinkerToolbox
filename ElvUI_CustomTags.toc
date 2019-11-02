@@ -1,7 +1,7 @@
 ## Interface: 80200
 ## Title: ElvUI CustomTags
-## Version: 1.00
-## Author: Azilroka
+## Version: 1.01
+## Author: Azilroka, Blazeflack
 ## RequiredDeps: ElvUI
 
 Core.lua

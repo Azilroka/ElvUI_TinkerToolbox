@@ -51,6 +51,10 @@ L['Defaults'] = true
 
 L = E.Libs.ACL:GetLocale("ElvUI", "enUS")
 
+-- oUF Defines
+E.oUF.Tags.Vars.E = E
+E.oUF.Tags.Vars.L = L
+
 G.CustomTags = {
 	["classcolor:player"] = {
 		func = "function() return Hex(_COLORS.class[_VARS.E.myclass or 'PRIEST']) end"
@@ -101,7 +105,7 @@ for textFormatStyle, textFormat in next, formattedText do
 		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION",
 		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
-	G.CustomTags[format("power:%s:hide", textFormat)] = {
+	G.CustomTags[format("power:%s:hidefull:hidezero", textFormat)] = {
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
 		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
@@ -206,7 +210,8 @@ local function CreateTagGroup(tag)
 		type = 'group',
 		name = tag,
 		get = function(info)
-			return gsub(tostring(E.global.CustomTags[info[#info - 1]] and E.global.CustomTags[info[#info - 1]][info[#info]] or G.CustomTags[info[#info - 1]][info[#info]] or ''), "\124", "\124\124")
+			local db = E.global.CustomTags[info[#info - 1]] or G.CustomTags[info[#info - 1]]
+			return gsub(tostring(db and db[info[#info]] or ''), "\124", "\124\124")
 		end,
 		args = {
 			name = {

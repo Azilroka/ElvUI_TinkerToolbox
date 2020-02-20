@@ -1,6 +1,6 @@
 ## Interface: 80200
-## Title: |cfffe7b2cElvUI|r |cff00b0ffC|cff138dffu|cff266affs|cff3846fft|cff4b23ffo|cff5e00ffm|cff8600f2T|cffaf00e5a|cffd700d7g|cffff00cas|r
-## Version: 1.03
+## Title: |cfffe7b2cElvUI|r |cffffffffCustomTags|r
+## Version: 1.04
 ## Author: Azilroka, Blazeflack
 ## RequiredDeps: ElvUI
 

@@ -168,9 +168,9 @@ end
 local function oUF_CreateTag(tagName, tagTable)
 	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')
 
-	if oUF.Tags.Methods[tagName] then return end
-
-	oUF.Tags.Methods[tagName] = tagTable.func
+	if not oUF.Tags.Methods[tagName] then
+		oUF.Tags.Methods[tagName] = tagTable.func
+	end
 
 	if tagTable.vars then
 		oUF.Tags.Vars[tagName] = tagTable.vars
@@ -448,8 +448,8 @@ end
 local function GetOptions()
 	E.Options.args.customtags = {
 		type = 'group',
-		name = L['Custom Tags'],
-		order = -10,
+		name = 'CustomTags',
+		order = 6,
 		childGroups = 'tab',
 		args = {
 			tagGroup = {
@@ -484,11 +484,11 @@ local function GetOptions()
 								width = 'full',
 								name = L['Category'],
 							},
-							discription = {
+							description = {
 								order = 2,
 								type = 'input',
 								width = 'full',
-								name = L['Discription'],
+								name = L['Description'],
 							},
 							events = {
 								order = 3,

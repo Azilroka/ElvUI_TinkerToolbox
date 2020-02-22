@@ -313,6 +313,7 @@ local function CreateTagGroup(tag)
 				width = 'full',
 				name = L['Function'],
 				multiline = 12,
+				luaHighlighting = true,
 				validate = IsFuncStringValid,
 				set = function(info, value)
 					value = gsub(strtrim(value), "\124\124+", "\124")

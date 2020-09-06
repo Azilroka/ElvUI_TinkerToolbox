@@ -57,7 +57,7 @@ E.oUF.Tags.Vars.L = L
 
 G.CustomTags = {
 	["classcolor:player"] = {
-		func = "function() return Hex(_COLORS.class[_VARS.E.myclass or 'PRIEST']) end"
+		func = "function() return Hex(_COLORS.class[select(2, UnitClass('player')]) end"
 	},
 	["deficit:name:colors"] = {
 		func = "function(unit)\n    local missinghp = _TAGS['missinghp'](unit)\n    local String\n\n    if missinghp then\n        local healthcolor = _TAGS['healthcolor'](unit)\n        String = format(\"%s-%s|r\", healthcolor, missinghp)\n    else\n        local name = _TAGS['name'](unit)\n        local namecolor = _TAGS['namecolor'](unit)\n        String = format(\"%s%s|r\", namecolor, name)\n    end\n\n    return String\nend",
@@ -65,7 +65,7 @@ G.CustomTags = {
 	},
 	["name:custom:length"] = {
 		events = "UNIT_NAME_UPDATE",
-		func = "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and _VARS.E:ShortenString(name,_VARS['name:custom:length']) or nil\nend",
+		func = "function(unit)\n    local name = UnitName(unit)\n    return name and _VARS.E:ShortenString(name,_VARS['name:custom:length'])\nend",
 		vars = 5,
 	},
 	["name:custom:abbreviate"] = {
@@ -120,6 +120,11 @@ for textFormatStyle, textFormat in next, formattedText do
 end
 
 G.CustomVars = {}
+
+local D = E:GetModule('Distributor')
+-- Set Distributor to Export
+D.GeneratedKeys.global.CustomTags = true
+D.GeneratedKeys.global.CustomVars = true
 
 local function AreTableEquals(currentTable, defaultTable)
 	for option, value in pairs(defaultTable) do
@@ -182,6 +187,22 @@ local function oUF_CreateTag(tagName, tagTable)
 
 	oUF.Tags:RefreshMethods(tagName)
 	oUF.Tags:RefreshEvents(tagName)
+end
+
+local function oUF_BuildTag(tagName, tagTable)
+	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')
+
+	if not oUF.Tags.Methods[tagName] then
+		oUF.Tags.Methods[tagName] = tagTable.func
+	end
+
+	if tagTable.vars then
+		oUF.Tags.Vars[tagName] = tagTable.vars
+	end
+
+	if tagTable.events then
+		oUF.Tags.Events[tagName] = tagTable.events
+	end
 end
 
 local function oUF_DeleteTag(tag)
@@ -312,7 +333,7 @@ local function CreateTagGroup(tag)
 				type = 'input',
 				width = 'full',
 				name = L['Function'],
-				multiline = 12,
+				multiline = 24,
 				luaHighlighting = true,
 				validate = IsFuncStringValid,
 				set = function(info, value)
@@ -514,7 +535,8 @@ local function GetOptions()
 								type = 'input',
 								width = 'full',
 								name = L['Function'],
-								multiline = 12,
+								multiline = 24,
+								luaHighlighting = true,
 								validate = IsFuncStringValid,
 							},
 							add = {
@@ -679,23 +701,28 @@ local function Initialize()
 		pcall(oUF_CreateVar, VarName, VarValue)
 	end
 
+	-- Build Default Custom Tags
+	for TagName, TagTable in next, G.CustomTags do
+		pcall(oUF_BuildTag, TagName, TagTable)
+	end
+
 	-- Build Saved Custom Variables
 	for VarName, VarValue in next, E.global.CustomVars do
 		pcall(oUF_CreateVar, VarName, VarValue)
 	end
 
-	-- Build Default Custom Tags
-	for TagName, TagTable in next, G.CustomTags do
-		pcall(oUF_CreateTag, TagName, TagTable)
-	end
-
 	-- Build Saved Tags
 	for TagName, TagTable in next, E.global.CustomTags do
-		pcall(oUF_CreateTag, TagName, TagTable)
+		pcall(oUF_BuildTag, TagName, TagTable)
+	end
+
+	-- Refresh Every Tag
+	for tagName in pairs(oUF.Tags.Methods) do
+		oUF.Tags:RefreshMethods(tagName)
+		oUF.Tags:RefreshEvents(tagName)
 	end
 
 	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)
 end
 
-
-hooksecurefunc(E, 'Initialize', Initialize)
+hooksecurefunc(E, 'LoadAPI', Initialize)

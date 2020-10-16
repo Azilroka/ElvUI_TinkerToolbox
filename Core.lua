@@ -61,7 +61,7 @@ G.CustomTags = {
 	},
 	["deficit:name:colors"] = {
 		func = "function(unit)\n    local missinghp = _TAGS['missinghp'](unit)\n    local String\n\n    if missinghp then\n        local healthcolor = _TAGS['healthcolor'](unit)\n        String = format(\"%s-%s|r\", healthcolor, missinghp)\n    else\n        local name = _TAGS['name'](unit)\n        local namecolor = _TAGS['namecolor'](unit)\n        String = format(\"%s%s|r\", namecolor, name)\n    end\n\n    return String\nend",
-		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_NAME_UPDATE",
+		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_NAME_UPDATE",
 	},
 	["name:custom:length"] = {
 		events = "UNIT_NAME_UPDATE",
@@ -94,15 +94,15 @@ end
 
 for textFormatStyle, textFormat in next, formattedText do
 	G.CustomTags[format("health:%s:hidefull", textFormat)] = {
-		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH",
+		events = "UNIT_HEALTH UNIT_MAXHEALTH",
 		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle)
 	}
 	G.CustomTags[format("health:%s:hidedead", textFormat)] = {
-		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION",
+		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
 		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle)
 	}
 	G.CustomTags[format("health:%s:hidefull:hidedead", textFormat)] = {
-		events = "UNIT_HEALTH_FREQUENT UNIT_MAXHEALTH UNIT_CONNECTION",
+		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
 		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
 	G.CustomTags[format("power:%s:hidefull:hidezero", textFormat)] = {

@@ -310,7 +310,7 @@ local function CreateTagGroup(tag)
 				type = 'input',
 				width = 'full',
 				name = L['Variables'],
-				multiline = 6,
+				multiline = 4,
 				validate = IsVarStringValid,
 				set = function(info, value)
 					value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
@@ -333,7 +333,7 @@ local function CreateTagGroup(tag)
 				type = 'input',
 				width = 'full',
 				name = L['Function'],
-				multiline = 24,
+				multiline = 10,
 				luaHighlighting = true,
 				validate = IsFuncStringValid,
 				set = function(info, value)

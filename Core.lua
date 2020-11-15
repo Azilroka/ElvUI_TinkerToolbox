@@ -198,8 +198,7 @@ function ImportTag(dataString)
 	CreateTagGroup(tagName, tagData)
 	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', tagName)
 
-	EncodedTagInfo = nil
-	DecodedTagInfo = nil
+	EncodedTagInfo, DecodedTagInfo = nil, nil
 end
 
 local function AreTableEquals(currentTable, defaultTable)

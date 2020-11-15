@@ -202,7 +202,6 @@ function ImportTag(dataString)
 	DecodedTagInfo = nil
 end
 
--- AV4xXlReU3ZhcnNeU15TZGVzY3JpcHRpb25eU15TY2F0ZWdvcnleU15TZnVuY15TZnVuY3Rpb24oKX5gcmV0dXJufmAnSGV5J35gZW5kXlNldmVudHNeU1VOSVRfTkFNRV9VUERBVEVedF5eOjpwaW5hY29sYWRh
 local function AreTableEquals(currentTable, defaultTable)
 	for option, value in pairs(defaultTable) do
 		if type(value) == 'table' then

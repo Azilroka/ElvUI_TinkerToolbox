@@ -1,5 +1,7 @@
 local E, _, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local oUF = E.oUF
+local LibCompress = E.Libs.Compress
+local LibBase64 = E.Libs.Base64
 
 local wipe = wipe
 local pcall = pcall
@@ -25,10 +27,12 @@ local copyTagInfo = { fromTag = '', toTag = ''}
 local formattedText = { CURRENT = 'current', CURRENT_PERCENT = 'current-percent', PERCENT = 'percent' }
 local validator = CreateFrame('Frame')
 
+local ACH, SharedTagOptions, SharedVarOptions, EncodedTagInfo, DecodedTagInfo
+
 local L = E.Libs.ACL:NewLocale("ElvUI", "enUS", true, true)
 
-L['Custom Variables'] = true
-L['Custom Tags'] = true
+L['Variables'] = true
+L['Tags'] = true
 
 L['New Tag'] = true
 L['Copy Tag'] = true
@@ -42,7 +46,6 @@ L['New Variable'] = true
 
 L['Name'] = true
 L['Value'] = true
-L['Variables'] = true
 L['Add'] = true
 L['Delete'] = true
 L['Copy'] = true
@@ -126,6 +129,80 @@ local D = E:GetModule('Distributor')
 D.GeneratedKeys.global.CustomTags = true
 D.GeneratedKeys.global.CustomVars = true
 
+-- Set function Locals
+local oUF_CreateTag, oUF_BuildTag, oUF_DeleteTag
+local oUF_CreateVar, oUF_DeleteVar
+
+local CreateTagGroup, DeleteTagGroup
+local CreateVarGroup, DeleteVarGroup
+
+local DecodeTag, ExportTag, ImportTag
+
+function DecodeTag(dataString)
+	if not dataString then
+		return
+	end
+
+	local tagName, tagData
+
+	local decodedData = LibBase64:Decode(dataString)
+	local decompressedData, decompressedMessage = LibCompress:Decompress(decodedData)
+
+	if not decompressedData then
+		E:Print('Error decompressing data:', decompressedMessage)
+		return
+	end
+
+	local serializedData, success
+	serializedData, tagName = E:SplitString(decompressedData, '^^::') -- '^^' indicates the end of the AceSerializer string
+	serializedData = format('%s%s', serializedData, '^^') --Add back the AceSerializer terminator
+	success, tagData = D:Deserialize(serializedData)
+
+	if not success then
+		E:Print('Error deserializing:', tagData)
+		return
+	end
+
+	return tagName, tagData
+end
+
+function ExportTag(tagName)
+	if not tagName or type(tagName) ~= 'string' then
+		return
+	end
+
+	local tagData = E:CopyTable({}, E.global.CustomTags[tagName])
+
+	if not tagData or (tagData and type(tagData) ~= 'table') then
+		return
+	end
+
+	local serialData = D:Serialize(tagData)
+	local exportString = format('%s::%s', serialData, tagName)
+	local compressedData = LibCompress:Compress(exportString)
+	local encodedData = LibBase64:Encode(compressedData)
+
+	return encodedData
+end
+
+function ImportTag(dataString)
+	local tagName, tagData = DecodeTag(dataString)
+
+	if not tagData or type(tagData) ~= 'table' then
+		return
+	end
+
+	E.global.CustomTags[tagName] = E:CopyTable({}, tagData)
+
+	oUF_CreateTag(tagName, tagData)
+	CreateTagGroup(tagName, tagData)
+	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', tagName)
+
+	EncodedTagInfo = nil
+	DecodedTagInfo = nil
+end
+
+-- AV4xXlReU3ZhcnNeU15TZGVzY3JpcHRpb25eU15TY2F0ZWdvcnleU15TZnVuY15TZnVuY3Rpb24oKX5gcmV0dXJufmAnSGV5J35gZW5kXlNldmVudHNeU1VOSVRfTkFNRV9VUERBVEVedF5eOjpwaW5hY29sYWRh
 local function AreTableEquals(currentTable, defaultTable)
 	for option, value in pairs(defaultTable) do
 		if type(value) == 'table' then
@@ -170,7 +247,7 @@ local function IsFuncStringValid(_, funcString)
 	return err or true
 end
 
-local function oUF_CreateTag(tagName, tagTable)
+function oUF_CreateTag(tagName, tagTable)
 	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')
 
 	if not oUF.Tags.Methods[tagName] then
@@ -189,7 +266,7 @@ local function oUF_CreateTag(tagName, tagTable)
 	oUF.Tags:RefreshEvents(tagName)
 end
 
-local function oUF_BuildTag(tagName, tagTable)
+function oUF_BuildTag(tagName, tagTable)
 	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')
 
 	if not oUF.Tags.Methods[tagName] then
@@ -205,7 +282,7 @@ local function oUF_BuildTag(tagName, tagTable)
 	end
 end
 
-local function oUF_DeleteTag(tag)
+function oUF_DeleteTag(tag)
 	rawset(oUF.Tags.Events, tag, nil)
 	rawset(oUF.Tags.Vars, tag, nil)
 	rawset(oUF.Tags.Methods, tag, nil)
@@ -214,465 +291,198 @@ local function oUF_DeleteTag(tag)
 	oUF.Tags:RefreshMethods(tag)
 end
 
-local function oUF_CreateVar(var, varValue)
+function oUF_CreateVar(var, varValue)
 	oUF.Tags.Vars[var] = varValue
 end
 
-local function oUF_DeleteVar(var)
+function oUF_DeleteVar(var)
 	rawset(oUF.Tags.Vars, var, nil)
 end
 
-local function DeleteTagGroup(tag)
+function DeleteTagGroup(tag)
 	E.Options.args.customtags.args.tagGroup.args[tag] = nil
 end
 
-local function CreateTagGroup(tag)
-	E.Options.args.customtags.args.tagGroup.args[tag] = {
-		type = 'group',
-		name = tag,
-		get = function(info)
-			local db = E.global.CustomTags[info[#info - 1]] or G.CustomTags[info[#info - 1]]
-			return gsub(tostring(db and db[info[#info]] or ''), "\124", "\124\124")
-		end,
-		args = {
-			name = {
-				order = 0,
-				type = 'input',
-				width = 'full',
-				name = L['Name'],
-				disabled = isDefaultTag,
-				validate = function(info, value)
-					value = gsub(strtrim(value), "\124\124+", "\124")
-					return (value ~= info[#info - 1] and oUF.Tags.Methods[value]) and L['Name Taken'] or true
-				end,
-				get = function(info)
-					return info[#info - 1]
-				end,
-				set = function(info, value)
-					value = gsub(strtrim(value), "\124\124+", "\124")
-					if value ~= '' and value ~= info[#info - 1] then
-						if not E.global.CustomTags[value] then
-							E.global.CustomTags[value] = CopyTable(E.global.CustomTags[info[#info - 1]])
+function CreateTagGroup(tag)
+	E.Options.args.customtags.args.tagGroup.args[tag] = ACH:Group(tag, nil, nil, nil, function(info) local db = E.global.CustomTags[info[#info - 1]] or G.CustomTags[info[#info - 1]] return gsub(tostring(db and db[info[#info]] or ''), "\124", "\124\124") end)
+	E.Options.args.customtags.args.tagGroup.args[tag].args = CopyTable(SharedTagOptions)
 
-							oUF_CreateTag(value, E.global.CustomTags[value])
-							CreateTagGroup(value, E.global.CustomTags[value])
+	E.Options.args.customtags.args.tagGroup.args[tag].args.name.disabled = isDefaultTag
+	E.Options.args.customtags.args.tagGroup.args[tag].args.name.get = function(info) return info[#info - 1] end
+	E.Options.args.customtags.args.tagGroup.args[tag].args.name.set = function(info, value)
+		value = gsub(strtrim(value), "\124\124+", "\124")
+		if value ~= '' and value ~= info[#info - 1] then
+			if not E.global.CustomTags[value] then
+				E.global.CustomTags[value] = CopyTable(E.global.CustomTags[info[#info - 1]])
 
-							E.global.CustomTags[info[#info - 1]] = nil
-							oUF_DeleteTag(info[#info - 1])
-							DeleteTagGroup(info[#info - 1])
+				oUF_CreateTag(value, E.global.CustomTags[value])
+				CreateTagGroup(value, E.global.CustomTags[value])
 
-							E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', value)
-						end
-					end
-				end,
-			},
-			category = {
-				order = 1,
-				type = 'input',
-				width = 'full',
-				name = L['Category'],
-				set = function(info, value)
-					E.global.CustomTags[info[#info - 1]].category = gsub(strtrim(value), "\124\124+", "\124")
-				end,
-			},
-			description = {
-				order = 2,
-				type = 'input',
-				width = 'full',
-				name = L['Description'],
-				set = function(info, value)
-					E.global.CustomTags[info[#info - 1]].description = gsub(strtrim(value), "\124\124+", "\124")
-				end,
-			},
-			events = {
-				order = 3,
-				type = 'input',
-				width = 'full',
-				name = L['Events'],
-				validate = IsEventStringValid,
-				set = function(info, value)
-					value = gsub(strtrim(value), "\124\124+", "\124")
-					if E.global.CustomTags[info[#info - 1]].events ~= value then
-						if value ~= '' then
-							E.global.CustomTags[info[#info - 1]].events = value
-							oUF.Tags.Events[info[#info - 1]] = value
-						else
-							E.global.CustomTags[info[#info - 1]].events = nil
-							oUF.Tags.Events[info[#info - 1]] = nil
-						end
+				E.global.CustomTags[info[#info - 1]] = nil
+				oUF_DeleteTag(info[#info - 1])
+				DeleteTagGroup(info[#info - 1])
 
-						oUF.Tags:RefreshEvents(info[#info - 1])
-					end
-				end,
-			},
-			vars = {
-				order = 4,
-				type = 'input',
-				width = 'full',
-				name = L['Variables'],
-				multiline = 4,
-				validate = IsVarStringValid,
-				set = function(info, value)
-					value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
-					if E.global.CustomTags[info[#info - 1]].vars ~= value then
-						rawset(oUF.Tags.Vars, info[#info - 1], nil)
+				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', value)
+			end
+		end
+	end
 
-						if value ~= '' then
-							E.global.CustomTags[info[#info - 1]].vars = value
-							oUF.Tags.Vars[info[#info - 1]] = value
-						else
-							E.global.CustomTags[info[#info - 1]].vars = nil
-						end
+	E.Options.args.customtags.args.tagGroup.args[tag].args.category.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end
+	E.Options.args.customtags.args.tagGroup.args[tag].args.description.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end
+	E.Options.args.customtags.args.tagGroup.args[tag].args.events.set = function(info, value)
+		value = gsub(strtrim(value), "\124\124+", "\124")
+		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
+			if value ~= '' then
+				E.global.CustomTags[info[#info - 1]][info[#info]] = value
+				oUF.Tags.Events[info[#info - 1]] = value
+			else
+				E.global.CustomTags[info[#info - 1]][info[#info]] = nil
+				oUF.Tags.Events[info[#info - 1]] = nil
+			end
 
-						oUF.Tags:RefreshMethods(info[#info - 1])
-					end
-				end,
-			},
-			func = {
-				order = 5,
-				type = 'input',
-				width = 'full',
-				name = L['Function'],
-				multiline = 10,
-				luaHighlighting = true,
-				validate = IsFuncStringValid,
-				set = function(info, value)
-					value = gsub(strtrim(value), "\124\124+", "\124")
-					if E.global.CustomTags[info[#info - 1]].func ~= value then
-						E.global.CustomTags[info[#info - 1]].func = value
+			oUF.Tags:RefreshEvents(info[#info - 1])
+		end
+	end
 
-						rawset(oUF.Tags.Methods, info[#info - 1], nil)
-						oUF.Tags.Methods[info[#info - 1]] = value
+	E.Options.args.customtags.args.tagGroup.args[tag].args.vars.set = function(info, value)
+		value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
+		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
+			rawset(oUF.Tags.Vars, info[#info - 1], nil)
 
-						oUF.Tags:RefreshMethods(info[#info - 1])
-					end
-				end,
-			},
-			delete = {
-				order = 6,
-				type = 'execute',
-				name = L['Delete'],
-				width = 'full',
-				confirm = true,
-				hidden = isDefaultTag,
-				func = function(info)
-					E.global.CustomTags[info[#info - 1]] = nil
+			if value ~= '' then
+				E.global.CustomTags[info[#info - 1]][info[#info]] = value
+				oUF.Tags.Vars[info[#info - 1]] = value
+			else
+				E.global.CustomTags[info[#info - 1]][info[#info]] = nil
+			end
 
-					oUF_DeleteTag(info[#info - 1])
+			oUF.Tags:RefreshMethods(info[#info - 1])
+		end
+	end
 
-					DeleteTagGroup(info[#info - 1])
+	E.Options.args.customtags.args.tagGroup.args[tag].args.func.set = function(info, value)
+		value = gsub(strtrim(value), "\124\124+", "\124")
+		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
+			E.global.CustomTags[info[#info - 1]][info[#info]] = value
 
-					E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup')
-				end,
-			},
-			reset = {
-				type = "execute",
-				order = 7,
-				name = L["Defaults"],
-				width = "full",
-				confirm = true,
-				hidden = function(info)
-					return (not isDefaultTag(info)) or (isDefaultTag(info) and AreTableEquals(E.global.CustomTags[info[#info - 1]], G.CustomTags[info[#info - 1]]))
-				end,
-				func = function(info)
-					E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]])
+			rawset(oUF.Tags.Methods, info[#info - 1], nil)
+			oUF.Tags.Methods[info[#info - 1]] = value
 
-					oUF_DeleteTag(info[#info - 1])
-					oUF_CreateTag(E.global.CustomTags[info[#info - 1]])
-				end,
-			},
-		},
-	}
+			oUF.Tags:RefreshMethods(info[#info - 1])
+		end
+	end
+
+	E.Options.args.customtags.args.tagGroup.args[tag].args.delete = ACH:Execute(L['Delete'], nil, 7, function(info) E.global.CustomTags[info[#info - 1]] = nil oUF_DeleteTag(info[#info - 1]) DeleteTagGroup(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup') end, nil, format('Delete - %s?', tag), 'full', nil, nil, nil, isDefaultTag)
+	E.Options.args.customtags.args.tagGroup.args[tag].args.reset = ACH:Execute(L['Defaults'], nil, 8, function(info) E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]]) oUF_DeleteTag(info[#info - 1]) oUF_CreateTag(E.global.CustomTags[info[#info - 1]]) end, nil, format('Reset to Default - %s?', tag), 'full', nil, nil, nil, function(info) return (not isDefaultTag(info)) or (isDefaultTag(info) and AreTableEquals(E.global.CustomTags[info[#info - 1]], G.CustomTags[info[#info - 1]])) end)
+
+	E.Options.args.customtags.args.tagGroup.args[tag].args.export = ACH:Input(L['Export Data'], nil, 9, 8, 'full', function(info) return ExportTag(info[#info - 1]) end)
 end
 
-local function DeleteVarGroup(var)
+function DeleteVarGroup(var)
 	E.Options.args.customtags.args.varGroup.args[var] = nil
 end
 
-local function CreateVarGroup(var)
-	E.Options.args.customtags.args.varGroup.args[var] = {
-		type = 'group',
-		name = var,
-		args = {
-			name = {
-				order = 1,
-				type = 'input',
-				width = 'full',
-				name = L['Name'],
-				validate = function(info, value)
-					value = gsub(strtrim(value), "\124", "\124\124")
-					return (value ~= info[#info - 1] and oUF.Tags.Vars[value]) and L['Name Taken'] or true
-				end,
-				get = function(info)
-					return info[#info - 1]
-				end,
-				set = function(info, value)
-					value = gsub(strtrim(value), "\124\124+", "\124")
-					if value ~= '' and value ~= info[#info - 1] then
-						if not E.global.CustomVars[value] then
-							E.global.CustomVars[value] = E.global.CustomVars[info[#info - 1]]
-							E.global.CustomVars[info[#info - 1]] = nil
+function CreateVarGroup(var)
+	E.Options.args.customtags.args.varGroup.args[var] = ACH:Group(var)
+	E.Options.args.customtags.args.varGroup.args[var].args = CopyTable(SharedVarOptions)
+	E.Options.args.customtags.args.varGroup.args[var].args.name.get = function(info) return info[#info - 1] end
+	E.Options.args.customtags.args.varGroup.args[var].args.name.set = function(info, value)
+		value = gsub(strtrim(value), "\124\124+", "\124")
+		if value ~= '' and value ~= info[#info - 1] then
+			if not E.global.CustomVars[value] then
+				E.global.CustomVars[value] = E.global.CustomVars[info[#info - 1]]
+				E.global.CustomVars[info[#info - 1]] = nil
 
-							oUF_CreateVar(value)
-							oUF_DeleteVar(info[#info - 1])
+				oUF_CreateVar(value)
+				oUF_DeleteVar(info[#info - 1])
 
-							CreateVarGroup(value)
-							DeleteVarGroup(info[#info - 1])
+				CreateVarGroup(value)
+				DeleteVarGroup(info[#info - 1])
 
-							E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', value)
-						end
-					end
-				end,
-			},
-			value = {
-				order = 2,
-				type = 'input',
-				width = 'full',
-				name = L['Value'],
-				multiline = 12,
-				validate = IsVarStringValid,
-				get = function(info)
-					return gsub(tostring(E.global.CustomVars[info[#info - 1]]), "\124", "\124\124")
-				end,
-				set = function(info, value)
-					value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
-					if E.global.CustomVars[info[#info - 1]] ~= value then
-						rawset(oUF.Tags.Vars, info[#info - 1], nil)
+				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', value)
+			end
+		end
+	end
 
-						if value ~= '' then
-							E.global.CustomVars[info[#info - 1]] = value
-							oUF.Tags.Vars[info[#info - 1]] = value
-						else
-							E.global.CustomVars[info[#info - 1]] = nil
-						end
-					end
-				end,
-			},
-			delete = {
-				order = 3,
-				type = 'execute',
-				name = L['Delete'],
-				width = 'full',
-				confirm = true,
-				func = function(info)
-					E.global.CustomVars[info[#info - 1]] = nil
-					rawset(oUF.Tags.Vars, info[#info - 1], nil)
+	E.Options.args.customtags.args.varGroup.args[var].args.value.get = function(info) return gsub(tostring(E.global.CustomVars[info[#info - 1]]), "\124", "\124\124") end
+	E.Options.args.customtags.args.varGroup.args[var].args.value.set = function(info, value)
+		value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
+		if E.global.CustomVars[info[#info - 1]] ~= value then
+			rawset(oUF.Tags.Vars, info[#info - 1], nil)
 
-					DeleteVarGroup(info[#info - 1])
+			if value ~= '' then
+				E.global.CustomVars[info[#info - 1]] = value
+				oUF.Tags.Vars[info[#info - 1]] = value
+			else
+				E.global.CustomVars[info[#info - 1]] = nil
+			end
+		end
+	end
 
-					E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup')
-				end,
-			},
-		},
-	}
+	E.Options.args.customtags.args.varGroup.args[var].args.delete = ACH:Execute(L['Delete'], nil, 3, function(info) E.global.CustomVars[info[#info - 1]] = nil rawset(oUF.Tags.Vars, info[#info - 1], nil) DeleteVarGroup(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup') end, nil, format('Delete - %s?', var), 'full')
 end
 
 local function GetOptions()
-	E.Options.args.customtags = {
-		type = 'group',
-		name = 'CustomTags',
-		order = 6,
-		childGroups = 'tab',
-		args = {
-			tagGroup = {
-				type = 'group',
-				order = 1,
-				name = L['Custom Tags'],
-				args = {
-					newTag = {
-						order = 0,
-						type = 'group',
-						name = L['New Tag'],
-						get = function(info)
-							return gsub(tostring(newTagInfo[info[#info]] or ''), "\124", "\124\124")
-						end,
-						set = function(info, value)
-							newTagInfo[info[#info]] = gsub(strtrim(value), "\124\124+", "\124")
-						end,
-						args = {
-							name = {
-								order = 0,
-								type = 'input',
-								width = 'full',
-								name = L['Name'],
-								validate = function(_, value)
-									value = gsub(strtrim(value), "\124\124+", "\124")
-									return oUF.Tags.Methods[value] and L['Name Taken'] or true
-								end,
-							},
-							category = {
-								order = 1,
-								type = 'input',
-								width = 'full',
-								name = L['Category'],
-							},
-							description = {
-								order = 2,
-								type = 'input',
-								width = 'full',
-								name = L['Description'],
-							},
-							events = {
-								order = 3,
-								type = 'input',
-								width = 'full',
-								name = L['Events'],
-								validate = IsEventStringValid,
-							},
-							vars = {
-								order = 4,
-								type = 'input',
-								width = 'full',
-								name = L['Variables'],
-								multiline = 6,
-								validate = IsVarStringValid,
-								set = function(_, value)
-									newTagInfo.vars = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
-								end,
-							},
-							func = {
-								order = 5,
-								type = 'input',
-								width = 'full',
-								name = L['Function'],
-								multiline = 24,
-								luaHighlighting = true,
-								validate = IsFuncStringValid,
-							},
-							add = {
-								order = 6,
-								type = 'execute',
-								name = L['Add'],
-								width = 'full',
-								hidden = function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end,
-								func = function()
-									E.global.CustomTags[newTagInfo.name] = CopyTable(newTagInfo)
-									E.global.CustomTags[newTagInfo.name].name = nil
+	ACH = E.Libs.ACH
 
-									oUF_CreateTag(newTagInfo.name, newTagInfo)
-
-									CreateTagGroup(newTagInfo.name, newTagInfo)
-
-									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name)
-
-									newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', ''
-								end,
-							},
-						},
-					},
-					copyTag = {
-						order = 1,
-						type = 'group',
-						name = L['Copy Tag'],
-						get = function(info)
-							return gsub(tostring(copyTagInfo[info[#info]]), "\124", "\124\124")
-						end,
-						set = function(info, value)
-							copyTagInfo[info[#info]] = gsub(strtrim(value), "\124\124+", "\124")
-						end,
-						args = {
-							fromTag = {
-								order = 1,
-								type = 'input',
-								width = 'full',
-								name = L['From Tag'],
-								validate = function(_, value)
-									value = gsub(strtrim(value), "\124\124+", "\124")
-									return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true
-								end,
-								validatePopup = true,
-							},
-							toTag = {
-								order = 2,
-								type = 'input',
-								width = 'full',
-								name = L['To Tag'],
-								validate = function(_, value)
-									value = gsub(strtrim(value), "\124\124+", "\124")
-									return oUF.Tags.Methods[value] and L['Name Taken'] or true
-								end,
-							},
-							add = {
-								order = 5,
-								type = 'execute',
-								name = L['Copy'],
-								width = 'full',
-								hidden = function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end,
-								func = function()
-									E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag])
-
-									oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag])
-									CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag])
-
-									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', copyTagInfo.toTag)
-
-									copyTagInfo.fromTag, copyTagInfo.toTag = '', ''
-								end,
-							},
-						},
-					},
-				},
-			},
-			varGroup = {
-				type = 'group',
-				order = 1,
-				name = L['Custom Variables'],
-				args = {
-					newVar ={
-						order = 0,
-						type = 'group',
-						name = L['New Variable'],
-						get = function(info)
-							return gsub(tostring(newVarInfo[info[#info]]), "\124", "\124\124")
-						end,
-						args = {
-							name = {
-								order = 1,
-								type = 'input',
-								width = 'full',
-								name = L['Name'],
-								validate = function(info, value)
-									value = gsub(strtrim(value), "\124\124+", "\124")
-									return oUF.Tags.Vars[value] and L['Name Taken'] or true
-								end,
-								set = function(_, value)
-									newVarInfo.name = gsub(strtrim(value), "\124\124+", "\124")
-								end,
-							},
-							value = {
-								order = 2,
-								type = 'input',
-								width = 'full',
-								name = L['Value'],
-								multiline = 16,
-								validate = IsVarStringValid,
-								set = function(_, value)
-									newVarInfo.value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
-								end,
-							},
-							add = {
-								order = 5,
-								type = 'execute',
-								name = L['Add'],
-								width = 'full',
-								hidden = function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end,
-								func = function()
-									E.global.CustomVars[newVarInfo.name] = newVarInfo.value
-									oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value
-
-									CreateVarGroup(newVarInfo.name, newVarInfo.value)
-
-									E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name)
-
-									newVarInfo.name, newVarInfo.value = '', ''
-								end,
-							},
-						},
-					},
-				},
-			},
-		},
+	SharedTagOptions = {
+		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = gsub(strtrim(value), "\124\124+", "\124") return oUF.Tags.Methods[value] and L['Name Taken'] or true end),
+		category = ACH:Input(L['Category'], nil, 2, nil, 'full'),
+		description = ACH:Input(L['Description'], nil, 3, nil, 'full'),
+		events = ACH:Input(L['Events'], nil, 4, nil, 'full', nil, nil, nil, nil, IsEventStringValid),
+		vars = ACH:Input(L['Variables'], nil, 5, 3, 'full', nil, nil, nil, nil, IsVarStringValid),
+		func = ACH:Input(L['Function'], nil, 6, 10, 'full', nil, nil, nil, nil, IsFuncStringValid)
 	}
+
+	SharedTagOptions.name.validatePopup = true
+	SharedTagOptions.events.validatePopup = true
+	SharedTagOptions.vars.validatePopup = true
+	SharedTagOptions.func.validatePopup = true
+	SharedTagOptions.func.luaHighlighting = true
+
+	SharedVarOptions = {
+		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) return oUF.Tags.Vars[gsub(strtrim(value), "\124\124+", "\124")] and L['Name Taken'] or true end),
+		value = ACH:Input(L['Value'], nil, 2, 16, 'full', nil, nil, nil, nil, IsVarStringValid),
+	}
+
+	E.Options.args.customtags = ACH:Group(L["CustomTags"], nil, 6, 'tab')
+	E.Options.args.customtags.args.tagGroup = ACH:Group(L['Tags'], nil, 1)
+	E.Options.args.customtags.args.tagGroup.args.newTag = ACH:Group(L['New Tag'], nil, 0, nil, function(info) return gsub(tostring(newTagInfo[info[#info]] or ''), "\124", "\124\124") end, function(info, value) newTagInfo[info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end)
+
+	E.Options.args.customtags.args.tagGroup.args.newTag.args = CopyTable(SharedTagOptions)
+	E.Options.args.customtags.args.tagGroup.args.newTag.args.vars.set = function(_, value) newTagInfo.vars = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124") end
+	E.Options.args.customtags.args.tagGroup.args.newTag.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomTags[newTagInfo.name] = CopyTable(newTagInfo) E.global.CustomTags[newTagInfo.name].name = nil oUF_CreateTag(newTagInfo.name, newTagInfo) CreateTagGroup(newTagInfo.name, newTagInfo) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name) newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', '' end, nil, nil, 'full', nil, nil, function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end)
+
+	E.Options.args.customtags.args.tagGroup.args.copyTag = ACH:Group(L['Copy Tag'], nil, 1, nil, function(info) return gsub(tostring(copyTagInfo[info[#info]]), "\124", "\124\124") end, function(info, value) copyTagInfo[info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end)
+	E.Options.args.customtags.args.tagGroup.args.copyTag.args.fromTag = ACH:Input(L['From Tag'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = gsub(strtrim(value), "\124\124+", "\124") return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true end)
+	E.Options.args.customtags.args.tagGroup.args.copyTag.args.fromTag.validatePopup = true
+
+	E.Options.args.customtags.args.tagGroup.args.copyTag.args.toTag = ACH:Input(L['To Tag'], nil, 2, nil, 'full', nil, nil, nil, nil, function(_, value) value = gsub(strtrim(value), "\124\124+", "\124") return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Taken']) or true end)
+	E.Options.args.customtags.args.tagGroup.args.copyTag.args.toTag.validatePopup = true
+
+	E.Options.args.customtags.args.tagGroup.args.copyTag.args.add = ACH:Execute(L['Copy'], nil, 5, function() E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag]) oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', copyTagInfo.toTag) copyTagInfo.fromTag, copyTagInfo.toTag = '', '' end, nil, nil, 'full', nil, nil, function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end)
+
+	E.Options.args.customtags.args.tagGroup.args.importTag = ACH:Group(L['Import Tag'], nil, 3)
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedTagInfo or '' end, function(_, value) EncodedTagInfo = value DecodedTagInfo = { DecodeTag(value) } end)
+
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag = ACH:Group(L['Preview'])
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.inline = true
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args = CopyTable(SharedTagOptions)
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.import = ACH:Execute(L['Import'], nil, 0, function() ImportTag(EncodedTagInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTagInfo end)
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.name.get = function() return DecodedTagInfo and DecodedTagInfo[1] or '' end
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.category.get = function() return DecodedTagInfo and DecodedTagInfo[2].category or '' end
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.description.get = function() return DecodedTagInfo and DecodedTagInfo[2].description or '' end
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.events.get = function() return DecodedTagInfo and DecodedTagInfo[2].events or '' end
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.vars.get = function() return DecodedTagInfo and DecodedTagInfo[2].vars or '' end
+	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.func.get = function() return DecodedTagInfo and DecodedTagInfo[2].func or '' end
+
+	E.Options.args.customtags.args.varGroup = ACH:Group(L['Variables'], nil, 1)
+	E.Options.args.customtags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return gsub(tostring(newVarInfo[info[#info]]), "\124", "\124\124") end)
+	E.Options.args.customtags.args.varGroup.args.newVar.args = CopyTable(SharedVarOptions)
+
+	E.Options.args.customtags.args.varGroup.args.newVar.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomVars[newVarInfo.name] = newVarInfo.value oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value CreateVarGroup(newVarInfo.name, newVarInfo.value) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name) newVarInfo.name, newVarInfo.value = '', '' end, nil, nil, 'full', nil, nil, function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end)
+	E.Options.args.customtags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = gsub(strtrim(value), "\124\124+", "\124") end
+	E.Options.args.customtags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124") end
 
 	-- Default Custom Tags
 	for Tag in next, G.CustomTags do

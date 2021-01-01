@@ -120,6 +120,30 @@ for textFormatStyle, textFormat in next, formattedText do
 		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
 		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true)\n    end\n\n    return String\nend", textFormatStyle),
 	}
+	G.CustomTags[format("health:%s:shortvalue:hidefull", textFormat)] = {
+		events = "UNIT_HEALTH UNIT_MAXHEALTH",
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true, true)\n    end\n\n    return String\nend", textFormatStyle)
+	}
+	G.CustomTags[format("health:%s:shortvalue:hidedead", textFormat)] = {
+		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true, true)\n    end\n\n    return String\nend", textFormatStyle)
+	}
+	G.CustomTags[format("health:%s:shortvalue:hidefull:hidedead", textFormat)] = {
+		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
+		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true, true)\n    end\n\n    return String\nend", textFormatStyle),
+	}
+	G.CustomTags[format("power:%s:shortvalue:hidefull:hidezero", textFormat)] = {
+		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true, true)\n    end\n\n    return String\nend", textFormatStyle),
+	}
+	G.CustomTags[format("power:%s:shortvalue:hidedead", textFormat)] = {
+		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH",
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true, true)\n    end\n\n    return String\nend", textFormatStyle),
+	}
+	G.CustomTags[format("power:%s:shortvalue:hidefull", textFormat)] = {
+		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
+		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, true, true)\n    end\n\n    return String\nend", textFormatStyle),
+	}
 end
 
 G.CustomVars = {}
@@ -302,13 +326,12 @@ function DeleteTagGroup(tag)
 end
 
 function CreateTagGroup(tag)
-	E.Options.args.customtags.args.tagGroup.args[tag] = ACH:Group(tag, nil, nil, nil, function(info) local db = E.global.CustomTags[info[#info - 1]] or G.CustomTags[info[#info - 1]] return gsub(tostring(db and db[info[#info]] or ''), "\124", "\124\124") end)
+	E.Options.args.customtags.args.tagGroup.args[tag] = ACH:Group(tag, nil, nil, nil, function(info) local db = E.global.CustomTags[info[#info - 1]] or G.CustomTags[info[#info - 1]] return tostring(db and db[info[#info]] or '') end)
 	E.Options.args.customtags.args.tagGroup.args[tag].args = CopyTable(SharedTagOptions)
 
 	E.Options.args.customtags.args.tagGroup.args[tag].args.name.disabled = isDefaultTag
 	E.Options.args.customtags.args.tagGroup.args[tag].args.name.get = function(info) return info[#info - 1] end
 	E.Options.args.customtags.args.tagGroup.args[tag].args.name.set = function(info, value)
-		value = gsub(strtrim(value), "\124\124+", "\124")
 		if value ~= '' and value ~= info[#info - 1] then
 			if not E.global.CustomTags[value] then
 				E.global.CustomTags[value] = CopyTable(E.global.CustomTags[info[#info - 1]])
@@ -325,10 +348,10 @@ function CreateTagGroup(tag)
 		end
 	end
 
-	E.Options.args.customtags.args.tagGroup.args[tag].args.category.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end
-	E.Options.args.customtags.args.tagGroup.args[tag].args.description.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end
+	E.Options.args.customtags.args.tagGroup.args[tag].args.category.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = strtrim(value) end
+	E.Options.args.customtags.args.tagGroup.args[tag].args.description.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = strtrim(value) end
 	E.Options.args.customtags.args.tagGroup.args[tag].args.events.set = function(info, value)
-		value = gsub(strtrim(value), "\124\124+", "\124")
+		value = strtrim(value)
 		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
 			if value ~= '' then
 				E.global.CustomTags[info[#info - 1]][info[#info]] = value
@@ -343,7 +366,7 @@ function CreateTagGroup(tag)
 	end
 
 	E.Options.args.customtags.args.tagGroup.args[tag].args.vars.set = function(info, value)
-		value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
+		value = tonumber(value) or strtrim(value)
 		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
 			rawset(oUF.Tags.Vars, info[#info - 1], nil)
 
@@ -359,7 +382,7 @@ function CreateTagGroup(tag)
 	end
 
 	E.Options.args.customtags.args.tagGroup.args[tag].args.func.set = function(info, value)
-		value = gsub(strtrim(value), "\124\124+", "\124")
+		value = strtrim(value)
 		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
 			E.global.CustomTags[info[#info - 1]][info[#info]] = value
 
@@ -385,7 +408,7 @@ function CreateVarGroup(var)
 	E.Options.args.customtags.args.varGroup.args[var].args = CopyTable(SharedVarOptions)
 	E.Options.args.customtags.args.varGroup.args[var].args.name.get = function(info) return info[#info - 1] end
 	E.Options.args.customtags.args.varGroup.args[var].args.name.set = function(info, value)
-		value = gsub(strtrim(value), "\124\124+", "\124")
+		value = strtrim(value)
 		if value ~= '' and value ~= info[#info - 1] then
 			if not E.global.CustomVars[value] then
 				E.global.CustomVars[value] = E.global.CustomVars[info[#info - 1]]
@@ -402,9 +425,9 @@ function CreateVarGroup(var)
 		end
 	end
 
-	E.Options.args.customtags.args.varGroup.args[var].args.value.get = function(info) return gsub(tostring(E.global.CustomVars[info[#info - 1]]), "\124", "\124\124") end
+	E.Options.args.customtags.args.varGroup.args[var].args.value.get = function(info) return tostring(E.global.CustomVars[info[#info - 1]]) end
 	E.Options.args.customtags.args.varGroup.args[var].args.value.set = function(info, value)
-		value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124")
+		value = tonumber(value) or strtrim(value)
 		if E.global.CustomVars[info[#info - 1]] ~= value then
 			rawset(oUF.Tags.Vars, info[#info - 1], nil)
 
@@ -424,7 +447,7 @@ local function GetOptions()
 	ACH = E.Libs.ACH
 
 	SharedTagOptions = {
-		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = gsub(strtrim(value), "\124\124+", "\124") return oUF.Tags.Methods[value] and L['Name Taken'] or true end),
+		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return oUF.Tags.Methods[value] and L['Name Taken'] or true end),
 		category = ACH:Input(L['Category'], nil, 2, nil, 'full'),
 		description = ACH:Input(L['Description'], nil, 3, nil, 'full'),
 		events = ACH:Input(L['Events'], nil, 4, nil, 'full', nil, nil, nil, nil, IsEventStringValid),
@@ -439,23 +462,23 @@ local function GetOptions()
 	SharedTagOptions.func.luaHighlighting = true
 
 	SharedVarOptions = {
-		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) return oUF.Tags.Vars[gsub(strtrim(value), "\124\124+", "\124")] and L['Name Taken'] or true end),
+		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) return oUF.Tags.Vars[strtrim(value)] and L['Name Taken'] or true end),
 		value = ACH:Input(L['Value'], nil, 2, 16, 'full', nil, nil, nil, nil, IsVarStringValid),
 	}
 
 	E.Options.args.customtags = ACH:Group(L["CustomTags"], nil, 6, 'tab')
 	E.Options.args.customtags.args.tagGroup = ACH:Group(L['Tags'], nil, 1)
-	E.Options.args.customtags.args.tagGroup.args.newTag = ACH:Group(L['New Tag'], nil, 0, nil, function(info) return gsub(tostring(newTagInfo[info[#info]] or ''), "\124", "\124\124") end, function(info, value) newTagInfo[info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end)
+	E.Options.args.customtags.args.tagGroup.args.newTag = ACH:Group(L['New Tag'], nil, 0, nil, function(info) return tostring(newTagInfo[info[#info]] or '') end, function(info, value) newTagInfo[info[#info]] = strtrim(value) end)
 
 	E.Options.args.customtags.args.tagGroup.args.newTag.args = CopyTable(SharedTagOptions)
-	E.Options.args.customtags.args.tagGroup.args.newTag.args.vars.set = function(_, value) newTagInfo.vars = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124") end
+	E.Options.args.customtags.args.tagGroup.args.newTag.args.vars.set = function(_, value) newTagInfo.vars = tonumber(value) or strtrim(value) end
 	E.Options.args.customtags.args.tagGroup.args.newTag.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomTags[newTagInfo.name] = CopyTable(newTagInfo) E.global.CustomTags[newTagInfo.name].name = nil oUF_CreateTag(newTagInfo.name, newTagInfo) CreateTagGroup(newTagInfo.name, newTagInfo) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name) newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', '' end, nil, nil, 'full', nil, nil, function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end)
 
-	E.Options.args.customtags.args.tagGroup.args.copyTag = ACH:Group(L['Copy Tag'], nil, 1, nil, function(info) return gsub(tostring(copyTagInfo[info[#info]]), "\124", "\124\124") end, function(info, value) copyTagInfo[info[#info]] = gsub(strtrim(value), "\124\124+", "\124") end)
-	E.Options.args.customtags.args.tagGroup.args.copyTag.args.fromTag = ACH:Input(L['From Tag'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = gsub(strtrim(value), "\124\124+", "\124") return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true end)
+	E.Options.args.customtags.args.tagGroup.args.copyTag = ACH:Group(L['Copy Tag'], nil, 1, nil, function(info) return tostring(copyTagInfo[info[#info]]) end, function(info, value) copyTagInfo[info[#info]] = strtrim(value) end)
+	E.Options.args.customtags.args.tagGroup.args.copyTag.args.fromTag = ACH:Input(L['From Tag'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true end)
 	E.Options.args.customtags.args.tagGroup.args.copyTag.args.fromTag.validatePopup = true
 
-	E.Options.args.customtags.args.tagGroup.args.copyTag.args.toTag = ACH:Input(L['To Tag'], nil, 2, nil, 'full', nil, nil, nil, nil, function(_, value) value = gsub(strtrim(value), "\124\124+", "\124") return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Taken']) or true end)
+	E.Options.args.customtags.args.tagGroup.args.copyTag.args.toTag = ACH:Input(L['To Tag'], nil, 2, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Taken']) or true end)
 	E.Options.args.customtags.args.tagGroup.args.copyTag.args.toTag.validatePopup = true
 
 	E.Options.args.customtags.args.tagGroup.args.copyTag.args.add = ACH:Execute(L['Copy'], nil, 5, function() E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag]) oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', copyTagInfo.toTag) copyTagInfo.fromTag, copyTagInfo.toTag = '', '' end, nil, nil, 'full', nil, nil, function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end)
@@ -475,12 +498,12 @@ local function GetOptions()
 	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.func.get = function() return DecodedTagInfo and DecodedTagInfo[2].func or '' end
 
 	E.Options.args.customtags.args.varGroup = ACH:Group(L['Variables'], nil, 1)
-	E.Options.args.customtags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return gsub(tostring(newVarInfo[info[#info]]), "\124", "\124\124") end)
+	E.Options.args.customtags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return tostring(newVarInfo[info[#info]]) end)
 	E.Options.args.customtags.args.varGroup.args.newVar.args = CopyTable(SharedVarOptions)
 
 	E.Options.args.customtags.args.varGroup.args.newVar.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomVars[newVarInfo.name] = newVarInfo.value oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value CreateVarGroup(newVarInfo.name, newVarInfo.value) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name) newVarInfo.name, newVarInfo.value = '', '' end, nil, nil, 'full', nil, nil, function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end)
-	E.Options.args.customtags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = gsub(strtrim(value), "\124\124+", "\124") end
-	E.Options.args.customtags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or gsub(strtrim(value), "\124\124+", "\124") end
+	E.Options.args.customtags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = strtrim(value) end
+	E.Options.args.customtags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or strtrim(value) end
 
 	-- Default Custom Tags
 	for Tag in next, G.CustomTags do

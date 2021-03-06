@@ -57,6 +57,7 @@ L = E.Libs.ACL:GetLocale("ElvUI", "enUS")
 -- oUF Defines
 E.oUF.Tags.Vars.E = E
 E.oUF.Tags.Vars.L = L
+E.oUF.Tags.Vars.TF = E.TagFunctions
 
 G.CustomTags = {
 	["classcolor:player"] = {

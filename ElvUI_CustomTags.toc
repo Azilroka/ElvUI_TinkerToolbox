@@ -1,6 +1,6 @@
-## Interface: 90001
+## Interface: 90005
 ## Title: |cfffe7b2cElvUI|r |cffffffffCustomTags|r
-## Version: 1.07
+## Version: 1.08
 ## Author: Azilroka, Blazeflack
 ## RequiredDeps: ElvUI
 

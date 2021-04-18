@@ -1,0 +1,6 @@
+package-as: ElvUI_CustomTags
+
+enable-nolib-creation: no
+
+move-folders:
+    ElvUI_CustomTags/ElvUI_CustomTags: ElvUI_CustomTags

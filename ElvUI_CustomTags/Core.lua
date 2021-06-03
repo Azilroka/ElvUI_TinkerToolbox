@@ -74,7 +74,7 @@ G.CustomTags = {
 	},
 	["name:custom:abbreviate"] = {
 		events = "UNIT_NAME_UPDATE",
-		func = "function(unit)\n    local name = UnitName(unit)\n\n    if name and string.len(name) > _VARS['name:custom:abbreviate'] then\n        name = name:gsub('(%S+) ', function(t) return t:sub(1,1)..'. ' end)\n    end\n\n    return name\nend",
+		func = "function(unit)\n    local name = UnitName(unit)\n\n    if name and string.len(name) > _VARS['name:custom:abbreviate'] then\n        name = name:gsub('(%S+) ', function(t) return t:utf8sub(1,1)..'. ' end)\n    end\n\n    return name\nend",
 		vars = 16,
 	},
 	["num:targeting"] = {

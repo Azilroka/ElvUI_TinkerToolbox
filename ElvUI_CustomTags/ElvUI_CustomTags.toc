@@ -1,6 +1,6 @@
 ## Interface: 90005
 ## Interface-Classic: 11306
-## Interface-BC: 20501
+## Interface-BCC: 20501
 ## Title: |cfffe7b2cElvUI|r |cffffffffCustomTags|r
 ## Version: 1.09
 ## Author: Azilroka, Blazeflack

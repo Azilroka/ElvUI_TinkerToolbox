@@ -11,7 +11,6 @@ local tonumber = tonumber
 local loadstring = loadstring
 local gmatch = gmatch
 local strtrim = strtrim
-local gsub = gsub
 local rawset = rawset
 local next = next
 local concat = table.concat
@@ -74,7 +73,7 @@ G.CustomTags = {
 	},
 	["name:custom:abbreviate"] = {
 		events = "UNIT_NAME_UPDATE",
-		func = "function(unit)\n    local name = UnitName(unit)\n\n    if name and string.len(name) > _VARS['name:custom:abbreviate'] then\n        name = name:gsub('(%S+) ', function(t) return t:utf8sub(1,1)..'. ' end)\n    end\n\n    return name\nend",
+		func = "function(unit)\n    local name = UnitName(unit)\n\n    if name and string.len(name) > _VARS['name:custom:abbreviate'] then\n        name = gsub(name, '(%S+) ', function(t) return string.utf8sub(t,1,1)..'. ' end)\n    end\n\n    return name\nend",
 		vars = 16,
 	},
 	["num:targeting"] = {

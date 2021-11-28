@@ -11,7 +11,6 @@ local type = type
 local next = next
 local strsplit = strsplit
 local strsplittable = strsplittable
-
 local tonumber = tonumber
 local format = format
 local strjoin = strjoin

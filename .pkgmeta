@@ -1,6 +1,6 @@
-package-as: ElvUI_CustomTags
+package-as: ElvUI_TinkerToolbox
 
 enable-nolib-creation: no
 
 move-folders:
-    ElvUI_CustomTags/ElvUI_CustomTags: ElvUI_CustomTags
+    ElvUI_TinkerToolbox/ElvUI_TinkerToolbox: ElvUI_TinkerToolbox

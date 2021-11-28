@@ -1,7 +1,8 @@
-local E, _, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local TT = unpack(ElvUI_TinkerToolbox)
+local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local oUF = E.oUF
-local LibCompress = E.Libs.Compress
-local LibBase64 = E.Libs.Base64
+
+local CT = TT:NewModule('CustomTags')
 
 local wipe = wipe
 local pcall = pcall
@@ -27,31 +28,7 @@ local formattedText = { CURRENT = 'current', CURRENT_PERCENT = 'current-percent'
 local validator = CreateFrame('Frame')
 
 local ACH, SharedTagOptions, SharedVarOptions, EncodedTagInfo, DecodedTagInfo
-
-local L = E.Libs.ACL:NewLocale("ElvUI", "enUS", true, true)
-
-L['Variables'] = true
-L['Tags'] = true
-
-L['New Tag'] = true
-L['Copy Tag'] = true
-L['From Tag'] = true
-L['To Tag'] = true
-
-L['Name Taken'] = true
-L['Name Not Found'] = true
-
-L['New Variable'] = true
-
-L['Name'] = true
-L['Value'] = true
-L['Add'] = true
-L['Delete'] = true
-L['Copy'] = true
-L['Events'] = true
-L['Defaults'] = true
-
-L = E.Libs.ACL:GetLocale("ElvUI", "enUS")
+local optionsPath
 
 -- oUF Defines
 E.oUF.Tags.Vars.E = E
@@ -91,7 +68,7 @@ G.CustomTags = {
 }
 
 -- Class Colors
-for CLASS in next, RAID_CLASS_COLORS do
+for CLASS in next, _G.RAID_CLASS_COLORS do
 	G.CustomTags[format("classcolor:%s", strlower(CLASS))] = { func = format("function() return Hex(_COLORS.class['%s']) end", CLASS) }
 end
 
@@ -153,76 +130,16 @@ local D = E:GetModule('Distributor')
 D.GeneratedKeys.global.CustomTags = true
 D.GeneratedKeys.global.CustomVars = true
 
--- Set function Locals
-local oUF_CreateTag, oUF_BuildTag, oUF_DeleteTag
-local oUF_CreateVar, oUF_DeleteVar
+function CT:ImportTag(dataString)
+	local name, data = TT:ImportData(dataString)
 
-local CreateTagGroup, DeleteTagGroup
-local CreateVarGroup, DeleteVarGroup
+	if name then
+		CT:oUF_CreateTag(name, data)
+		CT:CreateTagGroup(name, data)
+		E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox','customtags', 'tagGroup', name)
 
-local DecodeTag, ExportTag, ImportTag
-
-function DecodeTag(dataString)
-	if not dataString then
-		return
+		EncodedTagInfo, DecodedTagInfo = nil, nil
 	end
-
-	local tagName, tagData
-
-	local decodedData = LibBase64:Decode(dataString)
-	local decompressedData, decompressedMessage = LibCompress:Decompress(decodedData)
-
-	if not decompressedData then
-		E:Print('Error decompressing data:', decompressedMessage)
-		return
-	end
-
-	local serializedData, success
-	serializedData, tagName = E:SplitString(decompressedData, '^^::') -- '^^' indicates the end of the AceSerializer string
-	serializedData = format('%s%s', serializedData, '^^') --Add back the AceSerializer terminator
-	success, tagData = D:Deserialize(serializedData)
-
-	if not success then
-		E:Print('Error deserializing:', tagData)
-		return
-	end
-
-	return tagName, tagData
-end
-
-function ExportTag(tagName)
-	if not tagName or type(tagName) ~= 'string' then
-		return
-	end
-
-	local tagData = E:CopyTable({}, E.global.CustomTags[tagName])
-
-	if not tagData or (tagData and type(tagData) ~= 'table') then
-		return
-	end
-
-	local serialData = D:Serialize(tagData)
-	local exportString = format('%s::%s', serialData, tagName)
-	local compressedData = LibCompress:Compress(exportString)
-	local encodedData = LibBase64:Encode(compressedData)
-
-	return encodedData
-end
-
-function ImportTag(dataString)
-	local tagName, tagData = DecodeTag(dataString)
-
-	if not tagData or type(tagData) ~= 'table' then
-		return
-	end
-
-	E.global.CustomTags[tagName] = E:CopyTable({}, tagData)
-
-	oUF_CreateTag(tagName, tagData)
-	CreateTagGroup(tagName, tagData)
-	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', tagName)
-
-	EncodedTagInfo, DecodedTagInfo = nil, nil
 end
 
 local function AreTableEquals(currentTable, defaultTable)
@@ -269,7 +186,7 @@ local function IsFuncStringValid(_, funcString)
 	return err or true
 end
 
-function oUF_CreateTag(tagName, tagTable)
+function CT:oUF_CreateTag(tagName, tagTable)
 	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')
 
 	if not oUF.Tags.Methods[tagName] then
@@ -288,7 +205,7 @@ function oUF_CreateTag(tagName, tagTable)
 	oUF.Tags:RefreshEvents(tagName)
 end
 
-function oUF_BuildTag(tagName, tagTable)
+function CT:oUF_BuildTag(tagName, tagTable)
 	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')
 
 	if not oUF.Tags.Methods[tagName] then
@@ -304,7 +221,7 @@ function oUF_BuildTag(tagName, tagTable)
 	end
 end
 
-function oUF_DeleteTag(tag)
+function CT:oUF_DeleteTag(tag)
 	rawset(oUF.Tags.Events, tag, nil)
 	rawset(oUF.Tags.Vars, tag, nil)
 	rawset(oUF.Tags.Methods, tag, nil)
@@ -313,44 +230,44 @@ function oUF_DeleteTag(tag)
 	oUF.Tags:RefreshMethods(tag)
 end
 
-function oUF_CreateVar(var, varValue)
+function CT:oUF_CreateVar(var, varValue)
 	oUF.Tags.Vars[var] = varValue
 end
 
-function oUF_DeleteVar(var)
+function CT:oUF_DeleteVar(var)
 	rawset(oUF.Tags.Vars, var, nil)
 end
 
-function DeleteTagGroup(tag)
-	E.Options.args.customtags.args.tagGroup.args[tag] = nil
+function CT:DeleteTagGroup(tag)
+	optionsPath.customtags.args.tagGroup.args[tag] = nil
 end
 
-function CreateTagGroup(tag)
-	E.Options.args.customtags.args.tagGroup.args[tag] = ACH:Group(tag, nil, nil, nil, function(info) local db = E.global.CustomTags[info[#info - 1]] or G.CustomTags[info[#info - 1]] return tostring(db and db[info[#info]] or '') end)
-	E.Options.args.customtags.args.tagGroup.args[tag].args = CopyTable(SharedTagOptions)
+function CT:CreateTagGroup(tag)
+	local option = ACH:Group(tag, nil, nil, nil, function(info) local db = E.global.CustomTags[info[#info - 1]] or G.CustomTags[info[#info - 1]] return tostring(db and db[info[#info]] or '') end)
+	option.args = CopyTable(SharedTagOptions)
 
-	E.Options.args.customtags.args.tagGroup.args[tag].args.name.disabled = isDefaultTag
-	E.Options.args.customtags.args.tagGroup.args[tag].args.name.get = function(info) return info[#info - 1] end
-	E.Options.args.customtags.args.tagGroup.args[tag].args.name.set = function(info, value)
+	option.args.name.disabled = isDefaultTag
+	option.args.name.get = function(info) return info[#info - 1] end
+	option.args.name.set = function(info, value)
 		if value ~= '' and value ~= info[#info - 1] then
 			if not E.global.CustomTags[value] then
 				E.global.CustomTags[value] = CopyTable(E.global.CustomTags[info[#info - 1]])
 
-				oUF_CreateTag(value, E.global.CustomTags[value])
-				CreateTagGroup(value, E.global.CustomTags[value])
+				CT:oUF_CreateTag(value, E.global.CustomTags[value])
+				CT:CreateTagGroup(value, E.global.CustomTags[value])
 
 				E.global.CustomTags[info[#info - 1]] = nil
-				oUF_DeleteTag(info[#info - 1])
-				DeleteTagGroup(info[#info - 1])
+				CT:oUF_DeleteTag(info[#info - 1])
+				CT:DeleteTagGroup(info[#info - 1])
 
 				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', value)
 			end
 		end
 	end
 
-	E.Options.args.customtags.args.tagGroup.args[tag].args.category.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = strtrim(value) end
-	E.Options.args.customtags.args.tagGroup.args[tag].args.description.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = strtrim(value) end
-	E.Options.args.customtags.args.tagGroup.args[tag].args.events.set = function(info, value)
+	option.args.category.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = strtrim(value) end
+	option.args.description.set = function(info, value) E.global.CustomTags[info[#info - 1]][info[#info]] = strtrim(value) end
+	option.args.events.set = function(info, value)
 		value = strtrim(value)
 		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
 			if value ~= '' then
@@ -365,7 +282,7 @@ function CreateTagGroup(tag)
 		end
 	end
 
-	E.Options.args.customtags.args.tagGroup.args[tag].args.vars.set = function(info, value)
+	option.args.vars.set = function(info, value)
 		value = tonumber(value) or strtrim(value)
 		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
 			rawset(oUF.Tags.Vars, info[#info - 1], nil)
@@ -381,7 +298,7 @@ function CreateTagGroup(tag)
 		end
 	end
 
-	E.Options.args.customtags.args.tagGroup.args[tag].args.func.set = function(info, value)
+	option.args.func.set = function(info, value)
 		value = strtrim(value)
 		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
 			E.global.CustomTags[info[#info - 1]][info[#info]] = value
@@ -393,40 +310,41 @@ function CreateTagGroup(tag)
 		end
 	end
 
-	E.Options.args.customtags.args.tagGroup.args[tag].args.delete = ACH:Execute(L['Delete'], nil, 7, function(info) E.global.CustomTags[info[#info - 1]] = nil oUF_DeleteTag(info[#info - 1]) DeleteTagGroup(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup') end, nil, format('Delete - %s?', tag), 'full', nil, nil, nil, isDefaultTag)
-	E.Options.args.customtags.args.tagGroup.args[tag].args.reset = ACH:Execute(L['Defaults'], nil, 8, function(info) E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]]) oUF_DeleteTag(info[#info - 1]) oUF_CreateTag(E.global.CustomTags[info[#info - 1]]) end, nil, format('Reset to Default - %s?', tag), 'full', nil, nil, nil, function(info) return (not isDefaultTag(info)) or (isDefaultTag(info) and AreTableEquals(E.global.CustomTags[info[#info - 1]], G.CustomTags[info[#info - 1]])) end)
+	option.args.delete = ACH:Execute(L['Delete'], nil, 7, function(info) E.global.CustomTags[info[#info - 1]] = nil CT:oUF_DeleteTag(info[#info - 1]) CT:DeleteTagGroup(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup') end, nil, format('Delete - %s?', tag), 'full', nil, nil, nil, isDefaultTag)
+	option.args.reset = ACH:Execute(L['Defaults'], nil, 8, function(info) E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]]) CT:oUF_DeleteTag(info[#info - 1]) CT:oUF_CreateTag(E.global.CustomTags[info[#info - 1]]) end, nil, format('Reset to Default - %s?', tag), 'full', nil, nil, nil, function(info) return (not isDefaultTag(info)) or (isDefaultTag(info) and AreTableEquals(E.global.CustomTags[info[#info - 1]], G.CustomTags[info[#info - 1]])) end)
+	option.args.export = ACH:Input(L['Export Data'], nil, 9, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomTags')) end)
 
-	E.Options.args.customtags.args.tagGroup.args[tag].args.export = ACH:Input(L['Export Data'], nil, 9, 8, 'full', function(info) return ExportTag(info[#info - 1]) end)
+	optionsPath.customtags.args.tagGroup.args[tag] = option
 end
 
-function DeleteVarGroup(var)
-	E.Options.args.customtags.args.varGroup.args[var] = nil
+function CT:DeleteVarGroup(var)
+	optionsPath.customtags.args.varGroup.args[var] = nil
 end
 
-function CreateVarGroup(var)
-	E.Options.args.customtags.args.varGroup.args[var] = ACH:Group(var)
-	E.Options.args.customtags.args.varGroup.args[var].args = CopyTable(SharedVarOptions)
-	E.Options.args.customtags.args.varGroup.args[var].args.name.get = function(info) return info[#info - 1] end
-	E.Options.args.customtags.args.varGroup.args[var].args.name.set = function(info, value)
+function CT:CreateVarGroup(var)
+	local option = ACH:Group(var)
+	option.args = CopyTable(SharedVarOptions)
+	option.args.name.get = function(info) return info[#info - 1] end
+	option.args.name.set = function(info, value)
 		value = strtrim(value)
 		if value ~= '' and value ~= info[#info - 1] then
 			if not E.global.CustomVars[value] then
 				E.global.CustomVars[value] = E.global.CustomVars[info[#info - 1]]
 				E.global.CustomVars[info[#info - 1]] = nil
 
-				oUF_CreateVar(value)
-				oUF_DeleteVar(info[#info - 1])
+				CT:oUF_CreateVar(value)
+				CT:oUF_DeleteVar(info[#info - 1])
 
-				CreateVarGroup(value)
-				DeleteVarGroup(info[#info - 1])
+				CT:CreateVarGroup(value)
+				CT:DeleteVarGroup(info[#info - 1])
 
 				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', value)
 			end
 		end
 	end
 
-	E.Options.args.customtags.args.varGroup.args[var].args.value.get = function(info) return tostring(E.global.CustomVars[info[#info - 1]]) end
-	E.Options.args.customtags.args.varGroup.args[var].args.value.set = function(info, value)
+	option.args.value.get = function(info) return tostring(E.global.CustomVars[info[#info - 1]]) end
+	option.args.value.set = function(info, value)
 		value = tonumber(value) or strtrim(value)
 		if E.global.CustomVars[info[#info - 1]] ~= value then
 			rawset(oUF.Tags.Vars, info[#info - 1], nil)
@@ -440,11 +358,14 @@ function CreateVarGroup(var)
 		end
 	end
 
-	E.Options.args.customtags.args.varGroup.args[var].args.delete = ACH:Execute(L['Delete'], nil, 3, function(info) E.global.CustomVars[info[#info - 1]] = nil rawset(oUF.Tags.Vars, info[#info - 1], nil) DeleteVarGroup(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup') end, nil, format('Delete - %s?', var), 'full')
+	option.args.delete = ACH:Execute(L['Delete'], nil, 3, function(info) E.global.CustomVars[info[#info - 1]] = nil rawset(oUF.Tags.Vars, info[#info - 1], nil) CT:DeleteVarGroup(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup') end, nil, format('Delete - %s?', var), 'full')
+
+	optionsPath.customtags.args.varGroup.args[var] = option
 end
 
-local function GetOptions()
+function CT:GetOptions()
 	ACH = E.Libs.ACH
+	optionsPath = E.Options.args.TinkerToolbox.args
 
 	SharedTagOptions = {
 		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return oUF.Tags.Methods[value] and L['Name Taken'] or true end),
@@ -466,85 +387,85 @@ local function GetOptions()
 		value = ACH:Input(L['Value'], nil, 2, 16, 'full', nil, nil, nil, nil, IsVarStringValid),
 	}
 
-	E.Options.args.customtags = ACH:Group(L["CustomTags"], nil, 6, 'tab')
-	E.Options.args.customtags.args.tagGroup = ACH:Group(L['Tags'], nil, 1)
-	E.Options.args.customtags.args.tagGroup.args.newTag = ACH:Group(L['New Tag'], nil, 0, nil, function(info) return tostring(newTagInfo[info[#info]] or '') end, function(info, value) newTagInfo[info[#info]] = strtrim(value) end)
+	optionsPath.customtags = ACH:Group(L["Custom Tags"], nil, 1, 'tab')
+	optionsPath.customtags.args.tagGroup = ACH:Group(L['Tags'], nil, 1)
+	optionsPath.customtags.args.tagGroup.args.newTag = ACH:Group(L['New'], nil, 0, nil, function(info) return tostring(newTagInfo[info[#info]] or '') end, function(info, value) newTagInfo[info[#info]] = strtrim(value) end)
 
-	E.Options.args.customtags.args.tagGroup.args.newTag.args = CopyTable(SharedTagOptions)
-	E.Options.args.customtags.args.tagGroup.args.newTag.args.vars.set = function(_, value) newTagInfo.vars = tonumber(value) or strtrim(value) end
-	E.Options.args.customtags.args.tagGroup.args.newTag.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomTags[newTagInfo.name] = CopyTable(newTagInfo) E.global.CustomTags[newTagInfo.name].name = nil oUF_CreateTag(newTagInfo.name, newTagInfo) CreateTagGroup(newTagInfo.name, newTagInfo) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name) newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', '' end, nil, nil, 'full', nil, nil, function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end)
+	optionsPath.customtags.args.tagGroup.args.newTag.args = CopyTable(SharedTagOptions)
+	optionsPath.customtags.args.tagGroup.args.newTag.args.vars.set = function(_, value) newTagInfo.vars = tonumber(value) or strtrim(value) end
+	optionsPath.customtags.args.tagGroup.args.newTag.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomTags[newTagInfo.name] = CopyTable(newTagInfo) E.global.CustomTags[newTagInfo.name].name = nil CT:oUF_CreateTag(newTagInfo.name, newTagInfo) CT:CreateTagGroup(newTagInfo.name, newTagInfo) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', newTagInfo.name) newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', '' end, nil, nil, 'full', nil, nil, function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end)
 
-	E.Options.args.customtags.args.tagGroup.args.copyTag = ACH:Group(L['Copy Tag'], nil, 1, nil, function(info) return tostring(copyTagInfo[info[#info]]) end, function(info, value) copyTagInfo[info[#info]] = strtrim(value) end)
-	E.Options.args.customtags.args.tagGroup.args.copyTag.args.fromTag = ACH:Input(L['From Tag'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true end)
-	E.Options.args.customtags.args.tagGroup.args.copyTag.args.fromTag.validatePopup = true
+	optionsPath.customtags.args.tagGroup.args.copyTag = ACH:Group(L['Copy'], nil, 1, nil, function(info) return tostring(copyTagInfo[info[#info]]) end, function(info, value) copyTagInfo[info[#info]] = strtrim(value) end)
+	optionsPath.customtags.args.tagGroup.args.copyTag.args.fromTag = ACH:Input(L['From'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true end)
+	optionsPath.customtags.args.tagGroup.args.copyTag.args.fromTag.validatePopup = true
 
-	E.Options.args.customtags.args.tagGroup.args.copyTag.args.toTag = ACH:Input(L['To Tag'], nil, 2, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Taken']) or true end)
-	E.Options.args.customtags.args.tagGroup.args.copyTag.args.toTag.validatePopup = true
+	optionsPath.customtags.args.tagGroup.args.copyTag.args.toTag = ACH:Input(L['To'], nil, 2, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Taken']) or true end)
+	optionsPath.customtags.args.tagGroup.args.copyTag.args.toTag.validatePopup = true
 
-	E.Options.args.customtags.args.tagGroup.args.copyTag.args.add = ACH:Execute(L['Copy'], nil, 5, function() E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag]) oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', copyTagInfo.toTag) copyTagInfo.fromTag, copyTagInfo.toTag = '', '' end, nil, nil, 'full', nil, nil, function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end)
+	optionsPath.customtags.args.tagGroup.args.copyTag.args.add = ACH:Execute(L['Copy'], nil, 5, function() E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag]) CT:oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CT:CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'tagGroup', copyTagInfo.toTag) copyTagInfo.fromTag, copyTagInfo.toTag = '', '' end, nil, nil, 'full', nil, nil, function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end)
 
-	E.Options.args.customtags.args.tagGroup.args.importTag = ACH:Group(L['Import Tag'], nil, 3)
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedTagInfo or '' end, function(_, value) EncodedTagInfo = value DecodedTagInfo = { DecodeTag(value) } end)
+	optionsPath.customtags.args.tagGroup.args.importTag = ACH:Group(L['Import'], nil, 3)
+	optionsPath.customtags.args.tagGroup.args.importTag.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedTagInfo or '' end, function(_, value) EncodedTagInfo = value DecodedTagInfo = { TT:DecodeData(value) } end)
 
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag = ACH:Group(L['Preview'])
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.inline = true
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args = CopyTable(SharedTagOptions)
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.import = ACH:Execute(L['Import'], nil, 0, function() ImportTag(EncodedTagInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTagInfo end)
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.name.get = function() return DecodedTagInfo and DecodedTagInfo[1] or '' end
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.category.get = function() return DecodedTagInfo and DecodedTagInfo[2].category or '' end
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.description.get = function() return DecodedTagInfo and DecodedTagInfo[2].description or '' end
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.events.get = function() return DecodedTagInfo and DecodedTagInfo[2].events or '' end
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.vars.get = function() return DecodedTagInfo and DecodedTagInfo[2].vars or '' end
-	E.Options.args.customtags.args.tagGroup.args.importTag.args.previewTag.args.func.get = function() return DecodedTagInfo and DecodedTagInfo[2].func or '' end
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag = ACH:Group(L['Preview'])
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.inline = true
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args = CopyTable(SharedTagOptions)
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.import = ACH:Execute(L['Import'], nil, 0, function() CT:ImportTag(EncodedTagInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTagInfo end)
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.name.get = function() return DecodedTagInfo and DecodedTagInfo[1] or '' end
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.category.get = function() return DecodedTagInfo and DecodedTagInfo[2].category or '' end
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.description.get = function() return DecodedTagInfo and DecodedTagInfo[2].description or '' end
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.events.get = function() return DecodedTagInfo and DecodedTagInfo[2].events or '' end
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.vars.get = function() return DecodedTagInfo and DecodedTagInfo[2].vars or '' end
+	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.func.get = function() return DecodedTagInfo and DecodedTagInfo[2].func or '' end
 
-	E.Options.args.customtags.args.varGroup = ACH:Group(L['Variables'], nil, 1)
-	E.Options.args.customtags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return tostring(newVarInfo[info[#info]]) end)
-	E.Options.args.customtags.args.varGroup.args.newVar.args = CopyTable(SharedVarOptions)
+	optionsPath.customtags.args.varGroup = ACH:Group(L['Variables'], nil, 1)
+	optionsPath.customtags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return tostring(newVarInfo[info[#info]]) end)
+	optionsPath.customtags.args.varGroup.args.newVar.args = CopyTable(SharedVarOptions)
 
-	E.Options.args.customtags.args.varGroup.args.newVar.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomVars[newVarInfo.name] = newVarInfo.value oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value CreateVarGroup(newVarInfo.name, newVarInfo.value) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name) newVarInfo.name, newVarInfo.value = '', '' end, nil, nil, 'full', nil, nil, function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end)
-	E.Options.args.customtags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = strtrim(value) end
-	E.Options.args.customtags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or strtrim(value) end
+	optionsPath.customtags.args.varGroup.args.newVar.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomVars[newVarInfo.name] = newVarInfo.value oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value CT:CreateVarGroup(newVarInfo.name, newVarInfo.value) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customtags', 'varGroup', newVarInfo.name) newVarInfo.name, newVarInfo.value = '', '' end, nil, nil, 'full', nil, nil, function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end)
+	optionsPath.customtags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = strtrim(value) end
+	optionsPath.customtags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or strtrim(value) end
 
 	-- Default Custom Tags
 	for Tag in next, G.CustomTags do
-		CreateTagGroup(Tag)
+		CT:CreateTagGroup(Tag)
 	end
 
 	-- Saved Custom Tags
 	for Tag in next, E.global.CustomTags do
-		CreateTagGroup(Tag)
+		CT:CreateTagGroup(Tag)
 	end
 
 	-- Default Custom Variables
 	for Var in next, G.CustomVars do
-		CreateVarGroup(Var)
+		CT:CreateVarGroup(Var)
 	end
 
 	-- Saved Custom Variables
 	for Var in next, E.global.CustomVars do
-		CreateVarGroup(Var)
+		CT:CreateVarGroup(Var)
 	end
 end
 
-local function Initialize()
+function CT:Initialize()
 	-- Build Default Custom Variables
 	for VarName, VarValue in next, G.CustomVars do
-		pcall(oUF_CreateVar, VarName, VarValue)
+		pcall(CT.oUF_CreateVar, CT, VarName, VarValue)
 	end
 
 	-- Build Default Custom Tags
 	for TagName, TagTable in next, G.CustomTags do
-		pcall(oUF_BuildTag, TagName, TagTable)
+		pcall(CT.oUF_BuildTag, CT, TagName, TagTable)
 	end
 
 	-- Build Saved Custom Variables
 	for VarName, VarValue in next, E.global.CustomVars do
-		pcall(oUF_CreateVar, VarName, VarValue)
+		pcall(CT.oUF_CreateVar, CT, VarName, VarValue)
 	end
 
 	-- Build Saved Tags
 	for TagName, TagTable in next, E.global.CustomTags do
-		pcall(oUF_BuildTag, TagName, TagTable)
+		pcall(CT.oUF_BuildTag, CT, TagName, TagTable)
 	end
 
 	-- Refresh Every Tag
@@ -552,8 +473,4 @@ local function Initialize()
 		oUF.Tags:RefreshMethods(tagName)
 		oUF.Tags:RefreshEvents(tagName)
 	end
-
-	E.Libs.EP:RegisterPlugin('ElvUI_CustomTags', GetOptions)
 end
-
-hooksecurefunc(E, 'LoadAPI', Initialize)

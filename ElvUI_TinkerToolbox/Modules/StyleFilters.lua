@@ -1,5 +1,6 @@
 local TT = unpack(ElvUI_TinkerToolbox)
 local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local C -- ElvUI Config
 
 local CSF = TT:NewModule('CustomStyleFilters')
 local NP = E:GetModule('NamePlates')
@@ -7,7 +8,6 @@ local NP = E:GetModule('NamePlates')
 local ACH, optionsPath
 
 local strtrim = strtrim
-local strlen = strlen
 local format = format
 
 G['customStyleFilters'] = {
@@ -136,6 +136,7 @@ end
 function CSF:InitializeTriggerHooks()
 	hooksecurefunc(NP, 'StyleFilterConfigure', function() NP.StyleFilterTriggerEvents.FAKE_CustomStyleFiltersUpdate = 0 end)
 	NP:StyleFilterConfigure()
+	NP:StyleFilterAddCustomCheck("CustomStyleFilter", CSF.StyleFilterCustomCheck)
 end
 
 function CSF:IsActionApplied(frame, actionName)
@@ -176,10 +177,9 @@ function CSF:ClearActionFromFrame(frame, actionName)
 end
 
 function CSF:ApplyCustomActions(frame, actions)
-	for customAction in pairs(actions) do
-		if customAction:sub(-3) == 'CSF' and actions[customAction] then
-			local actionName = customAction:sub(1, strlen(customAction) - 3)
-			CSF:ApplyActionToFrame(frame, actionName)
+	for name in pairs(actions) do
+		if CSF.customActions[name] then
+			CSF:ApplyActionToFrame(frame, name)
 		end
 	end
 end
@@ -224,106 +224,19 @@ function CSF.StyleFilterCustomCheck(frame, _, trigger)
 	return passed
 end
 
-local function CreateNegatedTriggerToggles(name, db)
-	local t1 = ACH:Toggle('is' .. name, db.description)
-	local t2 = ACH:Toggle('isNot' .. name, db.description)
-
-	return t1, t2
-end
-
-local function CreateTriggerToggle(name, db)
-	return ACH:Toggle(name, db.description)
-end
-
-function CSF:AddCustomTriggers()
-	if not E.Options.args.nameplate.args.filters.args.triggers then
-		E.Options.args.nameplate.args.filters.args.triggers = {}
-		E.Options.args.nameplate.args.filters.args.triggers.args = {}
-	end
-
-	if not E.Options.args.nameplate.args.filters.args.triggers.args.custom then
-		E.Options.args.nameplate.args.filters.args.triggers.args.custom = {
-			type = 'group',
-			name = 'Custom',
-			order = 999,
-			get = function(info)
-				E.global.nameplate.filters[CSF.selectedNameplateFilter].triggers =
-					E.global.nameplate.filters[CSF.selectedNameplateFilter].triggers or {}
-				return E.global.nameplate.filters[CSF.selectedNameplateFilter].triggers[info[#info]]
-			end,
-			set = function(info, value)
-				E.global.nameplate.filters[CSF.selectedNameplateFilter].triggers =
-					E.global.nameplate.filters[CSF.selectedNameplateFilter].triggers or {}
-				E.global.nameplate.filters[CSF.selectedNameplateFilter].triggers[info[#info]] = value
-				NP:ConfigureAll()
-			end,
-			args = {}
-		}
-	end
-
+function CSF:AddCustomTriggers(name, db)
 	local tbl = E.Options.args.nameplate.args.filters.args.triggers.args.custom.args
-	wipe(tbl)
 
-	for name, db in pairs(CSF.customTriggers) do
-		if db.isNegated then
-			local t1, t2 = CreateNegatedTriggerToggles(name, db)
-			tbl['is' .. name] = t1
-			tbl['isNot' .. name] = t2
-		else
-			tbl[name] = CreateTriggerToggle(name, db)
-		end
+	if db.isNegated then
+		tbl['is' .. name] = ACH:Toggle('is' .. name, db.description)
+		tbl['isNot' .. name] = ACH:Toggle('isNot' .. name, db.description)
+	else
+		tbl[name] = ACH:Toggle(name, db.description)
 	end
 end
 
-local function CreateActionToggle(name, db)
-	return ACH:Toggle(name, db.description)
-end
-
-function CSF:AddCustomActions()
-	if not E.Options.args.nameplate.args.filters.args.actions.args.custom then
-		E.Options.args.nameplate.args.filters.args.actions.args.custom = {
-			type = 'group',
-			name = 'Custom',
-			order = 999,
-			inline = true,
-			get = function(info)
-				E.global.nameplate.filters[CSF.selectedNameplateFilter].actions =
-					E.global.nameplate.filters[CSF.selectedNameplateFilter].actions or {}
-				return E.global.nameplate.filters[CSF.selectedNameplateFilter].actions[info[#info]]
-			end,
-			set = function(info, value)
-				E.global.nameplate.filters[CSF.selectedNameplateFilter].actions =
-					E.global.nameplate.filters[CSF.selectedNameplateFilter].actions or {}
-				E.global.nameplate.filters[CSF.selectedNameplateFilter].actions[info[#info]] = value
-				NP:ConfigureAll()
-			end,
-			args = {}
-		}
-	end
-
-	local tbl = E.Options.args.nameplate.args.filters.args.actions.args.custom.args
-	wipe(tbl)
-
-	for name, db in pairs(CSF.customActions) do
-		tbl[name] = CreateActionToggle(name, db)
-	end
-end
-
-function CSF:HookNPOptions()
-	local oldAddFilter = E.Options.args.nameplate.args.filters.args.addFilter.set
-	E.Options.args.nameplate.args.filters.args.addFilter.set = function(info, value)
-		CSF.selectedNameplateFilter = value
-		oldAddFilter(info, value)
-		CSF:AddCustomTriggers()
-		CSF:AddCustomActions()
-	end
-	local oldFunc = E.Options.args.nameplate.args.filters.args.selectFilter.set
-	E.Options.args.nameplate.args.filters.args.selectFilter.set = function(info, value)
-		CSF.selectedNameplateFilter = value
-		oldFunc(info, value)
-		CSF:AddCustomTriggers()
-		CSF:AddCustomActions()
-	end
+function CSF:AddCustomActions(name, db)
+	E.Options.args.nameplate.args.filters.args.actions.args.custom.args[name] = ACH:Toggle(name, db.description)
 end
 
 function CSF:CreateTriggerGroup(name)
@@ -393,8 +306,21 @@ function CSF:CreateActionGroup(name)
 end
 
 function CSF:GetOptions()
-	ACH = E.Libs.ACH
+	ACH, C = E.Libs.ACH, E.OptionsUI[1]
 	optionsPath = E.Options.args.TinkerToolbox.args
+
+	E.Options.args.nameplate.args.filters.args.triggers.args.custom = ACH:Group('Custom', nil, 99, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers = E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers or {} E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] = value NP:ConfigureAll() end)
+	E.Options.args.nameplate.args.filters.args.triggers.args.custom.inline = true
+	E.Options.args.nameplate.args.filters.args.actions.args.custom = ACH:Group('Custom', nil, 99, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] = value NP:ConfigureAll() end)
+	E.Options.args.nameplate.args.filters.args.actions.args.custom.inline = true
+
+	for name, db in pairs(CSF.customTriggers) do
+		CSF:AddCustomTriggers(name, db)
+	end
+
+	for name, db in pairs(CSF.customActions) do
+		CSF:AddCustomActions(name, db)
+	end
 
 	local SharedTriggerOptions = {
 		name = ACH:Input(L["Name"], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return E.global.customStyleFilters.customTriggers[value] and L["Name Taken"] or true end),
@@ -469,8 +395,6 @@ function CSF:GetOptions()
 	for name in next, E.global.customStyleFilters.customActions do
 		CSF:CreateActionGroup(name)
 	end
-
-	CSF:HookNPOptions()
 end
 
 function CSF:Initialize()

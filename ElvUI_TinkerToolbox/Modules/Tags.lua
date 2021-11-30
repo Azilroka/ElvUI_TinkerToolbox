@@ -172,18 +172,19 @@ local function IsEventStringValid(_, eventString)
 	return #badEvents > 0 and 'Bad Events: '..concat(badEvents, ', ') or true
 end
 
-local function IsVarStringValid(_, varString)
-	if tonumber(varString) then
-		return true
-	else
-		local _, err = loadstring('return ' .. varString)
-		return err or true
-	end
-end
-
 local function IsFuncStringValid(_, funcString)
 	local _, err = loadstring('return ' .. funcString)
 	return err or true
+end
+
+local function IsVarStringValid(_, varString)
+	if tonumber(varString) then
+		return true
+	elseif type(varString) == 'function' then
+		return IsFuncStringValid(_, varString)
+	else
+		return true
+	end
 end
 
 function CT:oUF_CreateTag(tagName, tagTable)

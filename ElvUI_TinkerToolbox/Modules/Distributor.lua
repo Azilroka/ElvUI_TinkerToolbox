@@ -2,7 +2,6 @@ local TT = unpack(ElvUI_TinkerToolbox)
 local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 
 local CPD = TT:NewModule('CustomProfileDistributor')
-
 local D = E:GetModule('Distributor')
 
 local ACH, optionsPath
@@ -16,26 +15,21 @@ CPD.config = {
 
 function CPD:GetProfileData(profileType)
 	if not profileType or type(profileType) ~= 'string' then
-		E:Print('Bad argument #1 to "GetProfileData" (string expected)')
 		return
 	end
 
+	local db = profileType == 'profile' and 'ElvDB' or 'ElvPrivateDB'
+	local defaults = profileType == 'profile' and P or V
 	local profileData = {}
-	if profileType == 'profile' then
-		--Copy current profile data
-		profileData = E:CopyTable(profileData, ElvDB.profiles[CPD.config.profileFrom])
-		--This table will also hold all default values, not just the changed settings.
-		--This makes the table huge, and will cause the WoW client to lock up for several seconds.
-		--We compare against the default table and remove all duplicates from our table. The table is now much smaller.
-		profileData = E:RemoveTableDuplicates(profileData, P, D.GeneratedKeys.profile)
-		profileData = E:RemoveTableDuplicates(profileData, ElvDB.profiles[CPD.config.compareProfile], D.GeneratedKeys.profile)
-		profileData = E:FilterTableFromBlacklist(profileData, D.blacklistedKeys.profile)
-	elseif profileType == 'private' then
-		profileData = E:CopyTable(profileData, ElvPrivateDB.profiles[CPD.config.profileFrom])
-		profileData = E:RemoveTableDuplicates(profileData, V, D.GeneratedKeys.private)
-		profileData = E:RemoveTableDuplicates(profileData, ElvPrivateDB.profiles[CPD.config.compareProfile], D.GeneratedKeys.private)
-		profileData = E:FilterTableFromBlacklist(profileData, D.blacklistedKeys.private)
-	end
+
+	--Copy current profile data
+	profileData = E:CopyTable(profileData, _G[db].profiles[CPD.config.profileFrom])
+	--This table will also hold all default values, not just the changed settings.
+	--This makes the table huge, and will cause the WoW client to lock up for several seconds.
+	--We compare against the default table and remove all duplicates from our table. The table is now much smaller.
+	profileData = E:RemoveTableDuplicates(profileData, defaults, D.GeneratedKeys[profileType])
+	profileData = E:RemoveTableDuplicates(profileData, _G[db].profiles[CPD.config.compareProfile], D.GeneratedKeys[profileType])
+	profileData = E:FilterTableFromBlacklist(profileData, D.blacklistedKeys[profileType])
 
 	return profileData
 end

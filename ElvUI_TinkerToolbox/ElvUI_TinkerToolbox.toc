@@ -16,3 +16,4 @@ Modules\Tags.lua
 Modules\DataTexts.lua
 Modules\StyleFilters.lua
 Modules\BagFilters.lua
+Modules\Distributor.lua

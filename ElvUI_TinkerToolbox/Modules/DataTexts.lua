@@ -40,7 +40,7 @@ local function AreTableEquals(currentTable, defaultTable)
 end
 
 local function isDefault(info)
-	return G.CustomTags[info[#info - 1]]
+	return G.CustomDataTexts[info[#info - 1]]
 end
 
 local function IsEventStringValid(_, eventString)

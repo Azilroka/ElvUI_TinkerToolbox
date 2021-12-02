@@ -37,7 +37,6 @@ function CPD:GetProfileData(profileType)
 	local defaults = profileType == 'profile' and P or V
 	local profileData = {}
 
-	--Copy current profile data
 	if CPD.config.exportType == 'compare' then
 		profileData = E:CopyTable(profileData, _G[db].profiles[CPD.config.profileFrom])
 	else
@@ -45,9 +44,7 @@ function CPD:GetProfileData(profileType)
 			profileData[dataType] = E:CopyTable({}, _G[db].profiles[CPD.config.profileFrom][dataType])
 		end
 	end
-	--This table will also hold all default values, not just the changed settings.
-	--This makes the table huge, and will cause the WoW client to lock up for several seconds.
-	--We compare against the default table and remove all duplicates from our table. The table is now much smaller.
+
 	profileData = E:RemoveTableDuplicates(profileData, defaults, D.GeneratedKeys[profileType])
 
 	if CPD.config.exportType == 'compare' then

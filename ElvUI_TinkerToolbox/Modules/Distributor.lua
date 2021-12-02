@@ -1,5 +1,5 @@
 local TT = unpack(ElvUI_TinkerToolbox)
-local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(ElvUI)
 local CPD = TT:NewModule('CustomProfileDistributor')
 local D = E:GetModule('Distributor')
 local LibCompress = E.Libs.Compress

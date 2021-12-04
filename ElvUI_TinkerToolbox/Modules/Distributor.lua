@@ -18,11 +18,33 @@ CPD.config = {
 	custom = {},
 }
 
-function CPD:GetCustomExport()
+local pluginNames = {}
+local OriginalOptions = {}
+
+function CPD:GetLocaleName(str)
+	if not next(pluginNames) then
+		for name, optTable in next, E.Options.args do
+			if not OriginalOptions[name] then
+				pluginNames[name] = optTable.name
+			end
+		end
+	end
+
+	for name, locale in next, pluginNames do
+		if str == name then
+			return locale
+		end
+	end
+end
+
+function CPD.GetCustomExport(info)
+	local option = info[#info]
 	local tbl = {}
 
-	for name in next, (CPD.config.profileType == 'profile' and P or V) do
-		tbl[name] = name:gsub("^%l", strupper)
+	for name, value in next, (CPD.config.profileType == 'profile' and P or V) do
+		if type(value) == 'table' and (option == 'customExport' and OriginalOptions[name] or option == 'customExportPlugin' and not tContains(E.OriginalOptions, name)) then
+			tbl[name] = OriginalOptions[name] or CPD:GetLocaleName(name) or name:gsub("^%l", strupper)
+		end
 	end
 
 	return tbl
@@ -82,6 +104,10 @@ function CPD:GetOptions()
 	ACH = E.Libs.ACH
 	optionsPath = E.Options.args.TinkerToolbox.args
 
+	for _, name in next, E.OriginalOptions do
+		OriginalOptions[name] = E.Options.args[name].name
+	end
+
 	optionsPath.customprofiledistributor = ACH:Group(L["Custom Profile Exporter"], nil, 5, 'tab')
 
 	optionsPath.customprofiledistributor.args.settings = ACH:Group(' ', nil, 0, nil, function(info) return CPD.config[info[#info]] end, function(info, value) CPD.config[info[#info]] = value end)
@@ -93,7 +119,8 @@ function CPD:GetOptions()
 	optionsPath.customprofiledistributor.args.settings.args.compareProfile = ACH:Select(L["Profile to Compare"], nil, 4, function() local tbl = {} for _, name in pairs(E[CPD.config.profileType == 'profile' and 'data' or 'charSettings']:GetProfiles()) do tbl[name] = name end tbl[CPD.config.profileFrom] = nil return tbl end, nil, nil, nil, nil, function() return CPD.config.profileFrom == '' end, function() return CPD.config.exportType ~= 'compare' end)
 	optionsPath.customprofiledistributor.args.settings.args.exportName = ACH:Input(L["Export Name"], nil, 5)
 
-	optionsPath.customprofiledistributor.args.settings.args.customExport = ACH:MultiSelect('', nil, -2, CPD.GetCustomExport, nil, nil, function(_, key) return CPD.config.custom[key] end, function(_, key, value) CPD.config.custom[key] = value end, nil, function() return CPD.config.exportType ~= 'custom' end)
+	optionsPath.customprofiledistributor.args.settings.args.customExport = ACH:MultiSelect('', nil, -3, CPD.GetCustomExport, nil, nil, function(_, key) return CPD.config.custom[key] end, function(_, key, value) CPD.config.custom[key] = value end, nil, function() return CPD.config.exportType ~= 'custom' end)
+	optionsPath.customprofiledistributor.args.settings.args.customExportPlugin = ACH:MultiSelect('', nil, -2, CPD.GetCustomExport, nil, nil, function(_, key) return CPD.config.custom[key] end, function(_, key, value) CPD.config.custom[key] = value end, nil, function() return CPD.config.exportType ~= 'custom' end)
 
 	optionsPath.customprofiledistributor.args.export = ACH:Group(' ', nil, -1)
 	optionsPath.customprofiledistributor.args.export.inline = true

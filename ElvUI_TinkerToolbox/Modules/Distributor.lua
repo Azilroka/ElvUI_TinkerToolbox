@@ -42,7 +42,7 @@ function CPD.GetCustomExport(info)
 	local tbl = {}
 
 	for name, value in next, (CPD.config.profileType == 'profile' and P or V) do
-		if type(value) == 'table' and (option == 'customExport' and OriginalOptions[name] or option == 'customExportPlugin' and not tContains(E.OriginalOptions, name)) then
+		if type(value) == 'table' and (option == 'customExport' and OriginalOptions[name] or option == 'customExportPlugin' and not OriginalOptions[name]) then
 			tbl[name] = OriginalOptions[name] or CPD:GetLocaleName(name) or name:gsub("^%l", strupper)
 		end
 	end

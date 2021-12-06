@@ -416,7 +416,7 @@ function CT:GetOptions()
 
 	for option in next, SharedTagOptions do
 		if option ~= 'name' then
-			optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args[option].get = function(info) return DecodedTagInfo and DecodedTagInfo[2][info#info] or '' end
+			optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args[option].get = function(info) return DecodedTagInfo and DecodedTagInfo[2][info[#info]] or '' end
 		end
 	end
 

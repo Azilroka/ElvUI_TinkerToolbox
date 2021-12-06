@@ -3,6 +3,7 @@ local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, Profil
 local oUF = E.oUF
 
 local CT = TT:NewModule('CustomTags')
+local D = E:GetModule('Distributor')
 
 local wipe = wipe
 local pcall = pcall
@@ -125,7 +126,6 @@ end
 
 G.CustomVars = {}
 
-local D = E:GetModule('Distributor')
 -- Set Distributor to Export
 D.GeneratedKeys.global.CustomTags = true
 D.GeneratedKeys.global.CustomVars = true
@@ -413,11 +413,12 @@ function CT:GetOptions()
 	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args = CopyTable(SharedTagOptions)
 	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.import = ACH:Execute(L['Import'], nil, 0, function() CT:ImportTag(EncodedTagInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTagInfo end)
 	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.name.get = function() return DecodedTagInfo and DecodedTagInfo[1] or '' end
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.category.get = function() return DecodedTagInfo and DecodedTagInfo[2].category or '' end
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.description.get = function() return DecodedTagInfo and DecodedTagInfo[2].description or '' end
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.events.get = function() return DecodedTagInfo and DecodedTagInfo[2].events or '' end
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.vars.get = function() return DecodedTagInfo and DecodedTagInfo[2].vars or '' end
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.func.get = function() return DecodedTagInfo and DecodedTagInfo[2].func or '' end
+
+	for option in next, SharedTagOptions do
+		if option ~= 'name' then
+			optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args[option].get = function(info) return DecodedTagInfo and DecodedTagInfo[2][info#info] or '' end
+		end
+	end
 
 	optionsPath.customtags.args.varGroup = ACH:Group(L['Variables'], nil, 1)
 	optionsPath.customtags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return tostring(newVarInfo[info[#info]]) end)

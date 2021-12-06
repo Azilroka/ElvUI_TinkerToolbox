@@ -4,21 +4,16 @@ local C -- ElvUI Config
 
 local CSF = TT:NewModule('CustomStyleFilters')
 local NP = E:GetModule('NamePlates')
+local D = E:GetModule('Distributor')
 
 local ACH, optionsPath
 
 local strtrim = strtrim
 local format = format
 
-G['customStyleFilters'] = {
-	['customTriggers'] = {},
-	['customActions'] = {}
-}
+G.customStyleFilters = { customTriggers = {}, customActions = {} }
 
-local D = E:GetModule('Distributor')
-D.GeneratedKeys.global.customStyleFilters = {}
-D.GeneratedKeys.global.customStyleFilters.customTriggers = true
-D.GeneratedKeys.global.customStyleFilters.customActions = true
+D.GeneratedKeys.global.customStyleFilters = { customTriggers = true, customActions = true }
 
 local newTriggerInfo = { name = '', description = '', isNegated = false, func = '' }
 

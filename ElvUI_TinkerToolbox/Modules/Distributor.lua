@@ -90,7 +90,7 @@ function CPD:GetProfileExport(profileType)
 
 	if CPD.config.exportFormat == 'text' then
 		local serialData = D:Serialize(profileData)
-		local exportString = D:CreateProfileExport(serialData, profileType, CPD.config.exportName)
+		local exportString = D:CreateProfileExport(serialData, profileType, CPD.config.exportName ~= '' and CPD.config.exportName or CPD.config.profileFrom)
 		local compressedData = LibCompress:Compress(exportString)
 		local encodedData = LibBase64:Encode(compressedData)
 		profileExport = encodedData
@@ -108,21 +108,20 @@ function CPD:GetOptions()
 	for _, name in next, E.OriginalOptions do
 		OriginalOptions[name] = E.Options.args[name].name
 	end
-	OriginalOptions.nameplate = OriginalOptions.nameplates
 
 	optionsPath.customprofiledistributor = ACH:Group(L["Custom Profile Exporter"], nil, 5, 'tab')
 
-	optionsPath.customprofiledistributor.args.settings = ACH:Group(' ', nil, 0, nil, function(info) return CPD.config[info[#info]] end, function(info, value) CPD.config[info[#info]] = value end)
+	optionsPath.customprofiledistributor.args.settings = ACH:Group(' ', nil, 0, nil, function(info) return CPD.config[info[#info]] end, function(info, value) CPD.config[info[#info]] = value CPD.config.exportedData = '' end)
 	optionsPath.customprofiledistributor.args.settings.inline = true
-	optionsPath.customprofiledistributor.args.settings.args.profileType = ACH:Select(L["Profile Type"], nil, 0, { profile = L["Profile"], private = L["Private"] }, nil, nil, nil, function(info, value) CPD.config[info[#info]] = value CPD.config.profileFrom = '' CPD.config.compareProfile = '' end)
-	optionsPath.customprofiledistributor.args.settings.args.exportType = ACH:Select(L["Export Type"], nil, 1, { compare = L["Compare"], custom = L["Custom"] }, nil, nil, nil, function(info, value) CPD.config[info[#info]] = value CPD.config.profileFrom = '' CPD.config.compareProfile = '' end)
+	optionsPath.customprofiledistributor.args.settings.args.profileType = ACH:Select(L["Profile Type"], nil, 0, { profile = L["Profile"], private = L["Private"] }, nil, nil, nil, function(info, value) CPD.config[info[#info]] = value CPD.config.profileFrom = '' CPD.config.compareProfile = '' CPD.config.exportedData = '' end)
+	optionsPath.customprofiledistributor.args.settings.args.exportType = ACH:Select(L["Export Type"], nil, 1, { compare = L["Compare"], custom = L["Custom"] }, nil, nil, nil, function(info, value) CPD.config[info[#info]] = value CPD.config.profileFrom = '' CPD.config.compareProfile = '' CPD.config.exportedData = '' end)
 	optionsPath.customprofiledistributor.args.settings.args.exportFormat = ACH:Select(L["Export Format"], nil, 2, { luaPlugin = L["Plugin"], text = L["Text"] })
-	optionsPath.customprofiledistributor.args.settings.args.profileFrom = ACH:Select(L["Profile to Export From"], nil, 3, function() local tbl = {} for _, name in pairs(E[CPD.config.profileType == 'profile' and 'data' or 'charSettings']:GetProfiles()) do tbl[name] = name end return tbl end, nil, nil, nil, function(info, value) CPD.config[info[#info]] = value CPD.config.compareProfile = '' end)
+	optionsPath.customprofiledistributor.args.settings.args.profileFrom = ACH:Select(L["Profile to Export From"], nil, 3, function() local tbl = {} for _, name in pairs(E[CPD.config.profileType == 'profile' and 'data' or 'charSettings']:GetProfiles()) do tbl[name] = name end return tbl end, nil, nil, nil, function(info, value) CPD.config[info[#info]] = value CPD.config.compareProfile = '' CPD.config.exportedData = '' end)
 	optionsPath.customprofiledistributor.args.settings.args.compareProfile = ACH:Select(L["Profile to Compare"], nil, 4, function() local tbl = {} for _, name in pairs(E[CPD.config.profileType == 'profile' and 'data' or 'charSettings']:GetProfiles()) do tbl[name] = name end tbl[CPD.config.profileFrom] = nil return tbl end, nil, nil, nil, nil, function() return CPD.config.profileFrom == '' end, function() return CPD.config.exportType ~= 'compare' end)
-	optionsPath.customprofiledistributor.args.settings.args.exportName = ACH:Input(L["Export Name"], nil, 5)
+	optionsPath.customprofiledistributor.args.settings.args.exportName = ACH:Input(L["Export Name"], nil, 5, nil, nil, nil, nil, nil, function() return CPD.config.exportFormat == 'luaPlugin' end)
 
-	optionsPath.customprofiledistributor.args.settings.args.customExport = ACH:MultiSelect('', nil, -3, CPD.GetCustomExport, nil, nil, function(_, key) return CPD.config.custom[key] end, function(_, key, value) CPD.config.custom[key] = value or nil end, nil, function() return CPD.config.exportType ~= 'custom' end)
-	optionsPath.customprofiledistributor.args.settings.args.customExportPlugin = ACH:MultiSelect('', nil, -2, CPD.GetCustomExport, nil, nil, function(_, key) return CPD.config.custom[key] end, function(_, key, value) CPD.config.custom[key] = value or nil end, nil, function() return CPD.config.exportType ~= 'custom' end)
+	optionsPath.customprofiledistributor.args.settings.args.customExport = ACH:MultiSelect('', nil, -3, CPD.GetCustomExport, nil, nil, function(_, key) return CPD.config.custom[key] end, function(_, key, value) CPD.config.custom[key] = value or nil CPD.config.exportedData = '' end, nil, function() return CPD.config.exportType ~= 'custom' end)
+	optionsPath.customprofiledistributor.args.settings.args.customExportPlugin = ACH:MultiSelect('', nil, -2, CPD.GetCustomExport, nil, nil, function(_, key) return CPD.config.custom[key] end, function(_, key, value) CPD.config.custom[key] = value or nil CPD.config.exportedData = '' end, nil, function() return CPD.config.exportType ~= 'custom' end)
 
 	optionsPath.customprofiledistributor.args.export = ACH:Group(' ', nil, -1)
 	optionsPath.customprofiledistributor.args.export.inline = true

@@ -377,10 +377,12 @@ function CT:GetOptions()
 		func = ACH:Input(L['Function'], nil, 6, 10, 'full', nil, nil, nil, nil, IsFuncStringValid)
 	}
 
-	SharedTagOptions.name.validatePopup = true
-	SharedTagOptions.events.validatePopup = true
-	SharedTagOptions.vars.validatePopup = true
-	SharedTagOptions.func.validatePopup = true
+	for option, optTable in next, SharedTagOptions do
+		if optTable.validate then
+			optTable.validatePopup = true
+		end
+	end
+
 	SharedTagOptions.func.luaHighlighting = true
 
 	SharedVarOptions = {

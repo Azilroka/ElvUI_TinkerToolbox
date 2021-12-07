@@ -220,7 +220,7 @@ function CSF.StyleFilterCustomCheck(frame, _, trigger)
 end
 
 function CSF:HandleCustomTriggers(name, db, add)
-	local tbl = E.Options.args.nameplate.args.filters.args.triggers.args.custom.args
+	local tbl = E.Options.args.nameplates.args.filters.args.triggers.args.custom.args
 
 	tbl['is ' .. name] = add and db.isNegated and ACH:Toggle('is ' .. name, db.description) or nil
 	tbl['isNot ' .. name] = add and db.isNegated and ACH:Toggle('isNot ' .. name, db.description) or nil
@@ -228,7 +228,7 @@ function CSF:HandleCustomTriggers(name, db, add)
 end
 
 function CSF:HandleCustomActions(name, db, add)
-	E.Options.args.nameplate.args.filters.args.actions.args.custom.args[name] = add and ACH:Toggle(name, db.description) or nil
+	E.Options.args.nameplates.args.filters.args.actions.args.custom.args[name] = add and ACH:Toggle(name, db.description) or nil
 end
 
 function CSF:CreateTriggerGroup(name)
@@ -301,9 +301,9 @@ function CSF:GetOptions()
 	ACH, C = E.Libs.ACH, E.OptionsUI[1]
 	optionsPath = E.Options.args.TinkerToolbox.args
 
-	E.Options.args.nameplate.args.filters.args.triggers.args.custom = ACH:Group('Custom Trigger', nil, -1, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers = E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers or {} E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customTriggers) end)
-	E.Options.args.nameplate.args.filters.args.actions.args.custom = ACH:Group('Custom Action', nil, -1, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customActions) end)
-	E.Options.args.nameplate.args.filters.args.actions.args.custom.inline = true
+	E.Options.args.nameplates.args.filters.args.triggers.args.custom = ACH:Group('Custom Trigger', nil, -1, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers = E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers or {} E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customTriggers) end)
+	E.Options.args.nameplates.args.filters.args.actions.args.custom = ACH:Group('Custom Action', nil, -1, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customActions) end)
+	E.Options.args.nameplates.args.filters.args.actions.args.custom.inline = true
 
 	for name, db in pairs(CSF.customTriggers) do
 		CSF:HandleCustomTriggers(name, db, true)

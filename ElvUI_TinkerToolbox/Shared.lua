@@ -110,7 +110,7 @@ function TT:PLAYER_LOGIN()
 		end
 	end
 
-	E.Libs.EP:RegisterPlugin('TinkerToolbox', TT.GetOptions)
+	E.Libs.EP:RegisterPlugin('ElvUI_TinkerToolbox', TT.GetOptions)
 end
 
 TT:RegisterEvent('PLAYER_LOGIN')

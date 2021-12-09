@@ -11,9 +11,9 @@ local ACH, optionsPath
 local strtrim = strtrim
 local format = format
 
-G.customStyleFilters = { customTriggers = {}, customActions = {} }
+G.CustomStyleFilters = { customTriggers = {}, customActions = {} }
 
-D.GeneratedKeys.global.customStyleFilters = { customTriggers = true, customActions = true }
+D.GeneratedKeys.global.CustomStyleFilters = { customTriggers = true, customActions = true }
 
 local newTriggerInfo = { name = '', description = '', isNegated = false, func = '' }
 
@@ -40,9 +40,9 @@ function CSF:ImportTrigger(dataString)
 	local name = TT:ImportData(dataString)
 
 	if name then
-		CSF:RegisterCustomTrigger(name, E.global.customStyleFilters.customTriggers[name])
+		CSF:RegisterCustomTrigger(name, E.global.CustomStyleFilters.customTriggers[name])
 		CSF:CreateTriggerGroup(name)
-		E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customTriggers', name)
+		E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customTriggers', name)
 	end
 
 	EncodedTriggerInfo, DecodedTriggerInfo = nil, nil
@@ -54,9 +54,9 @@ function CSF:ImportAction(dataString)
 	local name = TT:ImportData(dataString)
 
 	if name then
-		CSF:RegisterCustomAction(name, E.global.customStyleFilters.customActions[name])
+		CSF:RegisterCustomAction(name, E.global.CustomStyleFilters.customActions[name])
 		CSF:CreateActionGroup(name)
-		E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customActions', name)
+		E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customActions', name)
 	end
 
 	EncodedActionInfo, DecodedActionInfo = nil, nil
@@ -92,7 +92,7 @@ function CSF:RemoveCustomTrigger(name)
 
 		CSF.customTriggers[name] = nil
 
-		optionsPath.customStyleFilters.args.customTriggers.args[name] = nil
+		optionsPath.CustomStyleFilters.args.customTriggers.args[name] = nil
 
 		NP:ConfigureAll()
 	end
@@ -124,7 +124,7 @@ function CSF:RemoveCustomAction(name)
 	end
 	E.StyleFilterDefaults.actions[name] = nil
 	CSF.customActions[name] = nil
-	optionsPath.customStyleFilters.args.customActions.args[name] = nil
+	optionsPath.CustomStyleFilters.args.customActions.args[name] = nil
 	NP:ConfigureAll()
 end
 
@@ -232,69 +232,69 @@ function CSF:HandleCustomActions(name, db, add)
 end
 
 function CSF:CreateTriggerGroup(name)
-	local options = ACH:Group(name, nil, nil, nil, function(info) local db = E.global.customStyleFilters.customTriggers[info[#info - 1]] return db[info[#info]] end)
+	local options = ACH:Group(name, nil, nil, nil, function(info) local db = E.global.CustomStyleFilters.customTriggers[info[#info - 1]] return db[info[#info]] end)
 	options.args = E:CopyTable({}, CSF.SharedTriggerOptions)
 
 	options.args.name.get = function(info) return info[#info - 1] end
 	options.args.name.set = function(info, value)
 		if value ~= '' and value ~= info[#info - 1] then
-			if not E.global.customStyleFilters.customTriggers[value] then
-				E.global.customStyleFilters.customTriggers[value] =
-					E:CopyTable({}, E.global.customStyleFilters.customTriggers[info[#info - 1]])
+			if not E.global.CustomStyleFilters.customTriggers[value] then
+				E.global.CustomStyleFilters.customTriggers[value] =
+					E:CopyTable({}, E.global.CustomStyleFilters.customTriggers[info[#info - 1]])
 
-				CSF:RegisterCustomTrigger(value, E.global.customStyleFilters.customTriggers[value])
+				CSF:RegisterCustomTrigger(value, E.global.CustomStyleFilters.customTriggers[value])
 				CSF:CreateTriggerGroup(value)
 
-				E.global.customStyleFilters.customTriggers[info[#info - 1]] = nil
+				E.global.CustomStyleFilters.customTriggers[info[#info - 1]] = nil
 				CSF:RemoveCustomTrigger(info[#info - 1])
-				optionsPath.customStyleFilters.args.customTriggers.args[info[#info - 1]] = nil
+				optionsPath.CustomStyleFilters.args.customTriggers.args[info[#info - 1]] = nil
 
-				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customTriggers', value)
+				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customTriggers', value)
 			end
 		end
 	end
 
-	options.args.isNegated.set = function(info, value) E.global.customStyleFilters.customTriggers[info[#info - 1]][info[#info]] = value CSF:RegisterCustomTrigger(info[#info - 1], E.global.customStyleFilters.customTriggers[info[#info - 1]]) CSF:HandleCustomTriggers(info[#info - 1], E.global.customStyleFilters.customTriggers[info[#info - 1]], true) end
-	options.args.description.set = function(info, value) E.global.customStyleFilters.customTriggers[info[#info - 1]][info[#info]] = strtrim(value) CSF:RegisterCustomTrigger(info[#info - 1], E.global.customStyleFilters.customTriggers[info[#info - 1]]) end
-	options.args.func.set = function(info, value) value = strtrim(value) if E.global.customStyleFilters.customTriggers[info[#info - 1]][info[#info]] ~= value then E.global.customStyleFilters.customTriggers[info[#info - 1]][info[#info]] = value CSF:RegisterCustomTrigger(info[#info - 1], E.global.customStyleFilters.customTriggers[info[#info - 1]]) end end
+	options.args.isNegated.set = function(info, value) E.global.CustomStyleFilters.customTriggers[info[#info - 1]][info[#info]] = value CSF:RegisterCustomTrigger(info[#info - 1], E.global.CustomStyleFilters.customTriggers[info[#info - 1]]) CSF:HandleCustomTriggers(info[#info - 1], E.global.CustomStyleFilters.customTriggers[info[#info - 1]], true) end
+	options.args.description.set = function(info, value) E.global.CustomStyleFilters.customTriggers[info[#info - 1]][info[#info]] = strtrim(value) CSF:RegisterCustomTrigger(info[#info - 1], E.global.CustomStyleFilters.customTriggers[info[#info - 1]]) end
+	options.args.func.set = function(info, value) value = strtrim(value) if E.global.CustomStyleFilters.customTriggers[info[#info - 1]][info[#info]] ~= value then E.global.CustomStyleFilters.customTriggers[info[#info - 1]][info[#info]] = value CSF:RegisterCustomTrigger(info[#info - 1], E.global.CustomStyleFilters.customTriggers[info[#info - 1]]) end end
 
-	options.args.delete = ACH:Execute(L["Delete"], nil, 7, function(info) E.global.customStyleFilters.customTriggers[info[#info - 1]] = nil CSF:RemoveCustomTrigger(info[#info - 1]) CSF:HandleCustomTriggers(info[#info - 1]) optionsPath.customStyleFilters.args.customTriggers.args[info[#info - 1]] = nil E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customTriggers') end, nil, format('Delete - %s?', name), 'full')
-	options.args.reset = ACH:Execute(L["Defaults"], nil, 8, function(info) E.global.customStyleFilters.customTriggers[info[#info - 1]] = CopyTable({description = '', isNegated = false, func = ''}) CSF:RegisterCustomTrigger(info[#info-1], E.global.customStyleFilters.customTriggers[info[#info - 1]]) end, nil, format('Reset to Default - %s?', name), 'full')
-	options.args.export = ACH:Input(L["Export Data"], nil, 9, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('customStyleFilters', 'customTriggers')) end)
+	options.args.delete = ACH:Execute(L["Delete"], nil, 7, function(info) E.global.CustomStyleFilters.customTriggers[info[#info - 1]] = nil CSF:RemoveCustomTrigger(info[#info - 1]) CSF:HandleCustomTriggers(info[#info - 1]) optionsPath.CustomStyleFilters.args.customTriggers.args[info[#info - 1]] = nil E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customTriggers') end, nil, format('Delete - %s?', name), 'full')
+	options.args.reset = ACH:Execute(L["Defaults"], nil, 8, function(info) E.global.CustomStyleFilters.customTriggers[info[#info - 1]] = CopyTable({description = '', isNegated = false, func = ''}) CSF:RegisterCustomTrigger(info[#info-1], E.global.CustomStyleFilters.customTriggers[info[#info - 1]]) end, nil, format('Reset to Default - %s?', name), 'full')
+	options.args.export = ACH:Input(L["Export Data"], nil, 9, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomStyleFilters', 'customTriggers')) end)
 
-	optionsPath.customStyleFilters.args.customTriggers.args[name] = options
+	optionsPath.CustomStyleFilters.args.customTriggers.args[name] = options
 end
 
 function CSF:CreateActionGroup(name)
-	local options = ACH:Group(name, nil, nil, nil, function(info) local db = E.global.customStyleFilters.customActions[info[#info - 1]] return db[info[#info]] end)
+	local options = ACH:Group(name, nil, nil, nil, function(info) local db = E.global.CustomStyleFilters.customActions[info[#info - 1]] return db[info[#info]] end)
 	options.args = E:CopyTable({}, CSF.SharedActionOptions)
 	options.args.name.get = function(info) return info[#info - 1] end
 	options.args.name.set = function(info, value)
 		if value ~= '' and value ~= info[#info - 1] then
-			if not E.global.customStyleFilters.customActions[value] then
-				E.global.customStyleFilters.customActions[value] = E:CopyTable({}, E.global.customStyleFilters.customActions[info[#info - 1]])
+			if not E.global.CustomStyleFilters.customActions[value] then
+				E.global.CustomStyleFilters.customActions[value] = E:CopyTable({}, E.global.CustomStyleFilters.customActions[info[#info - 1]])
 
-				CSF:RegisterCustomAction(value, E.global.customStyleFilters.customActions[value])
+				CSF:RegisterCustomAction(value, E.global.CustomStyleFilters.customActions[value])
 				CSF:CreateActionGroup(value)
 
-				E.global.customStyleFilters.customActions[info[#info - 1]] = nil
+				E.global.CustomStyleFilters.customActions[info[#info - 1]] = nil
 				CSF:RemoveCustomAction(info[#info - 1])
-				optionsPath.customStyleFilters.args.customActions.args[info[#info - 1]] = nil
+				optionsPath.CustomStyleFilters.args.customActions.args[info[#info - 1]] = nil
 
-				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customActions', value)
+				E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customActions', value)
 			end
 		end
 	end
-	options.args.description.set = function(info, value) E.global.customStyleFilters.customActions[info[#info - 1]][info[#info]] = strtrim(value) CSF:RegisterCustomAction(info[#info - 1], E.global.customStyleFilters.customActions[info[#info - 1]]) end
-	options.args.needsClear.set = function(info, value) E.global.customStyleFilters.customActions[info[#info - 1]][info[#info]] = value CSF:RegisterCustomAction(info[#info - 1],E.global.customStyleFilters.customActions[info[#info - 1]]) end
-	options.args.applyFunc.set = function(info, value) value = strtrim(value) if E.global.customStyleFilters.customActions[info[#info - 1]][info[#info]] ~= value then E.global.customStyleFilters.customActions[info[#info - 1]][info[#info]] = value CSF:RegisterCustomAction(info[#info - 1], E.global.customStyleFilters.customActions[info[#info - 1]]) end end
-	options.args.clearFunc.set = function(info, value) value = strtrim(value) if E.global.customStyleFilters.customActions[info[#info - 1]][info[#info]] ~= value then E.global.customStyleFilters.customActions[info[#info - 1]][info[#info]] = value CSF:RegisterCustomAction(info[#info - 1], E.global.customStyleFilters.customActions[info[#info - 1]]) end end
-	options.args.clearFunc.disabled = function() local db = E.global.customStyleFilters.customActions[name] return db and not db.needsClear end
-	options.args.delete = ACH:Execute(L["Delete"], nil, 7, function(info) E.global.customStyleFilters.customActions[info[#info - 1]] = nil CSF:HandleCustomActions(info[#info - 1]) CSF:RemoveCustomTrigger(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customActions') end, nil, format('Delete - %s?', name), 'full')
-	options.args.reset = ACH:Execute(L["Defaults"], nil, 8, function(info) E.global.customStyleFilters.customActions[info[#info - 1]] = CopyTable({description = '', isExclusive = false, func = ''}) CSF:RegisterCustomTrigger(name) end, nil, format('Reset to Default - %s?', name), 'full')
-	options.args.export = ACH:Input(L["Export Data"], nil, 9, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('customStyleFilters', 'customActions')) end)
+	options.args.description.set = function(info, value) E.global.CustomStyleFilters.customActions[info[#info - 1]][info[#info]] = strtrim(value) CSF:RegisterCustomAction(info[#info - 1], E.global.CustomStyleFilters.customActions[info[#info - 1]]) end
+	options.args.needsClear.set = function(info, value) E.global.CustomStyleFilters.customActions[info[#info - 1]][info[#info]] = value CSF:RegisterCustomAction(info[#info - 1],E.global.CustomStyleFilters.customActions[info[#info - 1]]) end
+	options.args.applyFunc.set = function(info, value) value = strtrim(value) if E.global.CustomStyleFilters.customActions[info[#info - 1]][info[#info]] ~= value then E.global.CustomStyleFilters.customActions[info[#info - 1]][info[#info]] = value CSF:RegisterCustomAction(info[#info - 1], E.global.CustomStyleFilters.customActions[info[#info - 1]]) end end
+	options.args.clearFunc.set = function(info, value) value = strtrim(value) if E.global.CustomStyleFilters.customActions[info[#info - 1]][info[#info]] ~= value then E.global.CustomStyleFilters.customActions[info[#info - 1]][info[#info]] = value CSF:RegisterCustomAction(info[#info - 1], E.global.CustomStyleFilters.customActions[info[#info - 1]]) end end
+	options.args.clearFunc.disabled = function() local db = E.global.CustomStyleFilters.customActions[name] return db and not db.needsClear end
+	options.args.delete = ACH:Execute(L["Delete"], nil, 7, function(info) E.global.CustomStyleFilters.customActions[info[#info - 1]] = nil CSF:HandleCustomActions(info[#info - 1]) CSF:RemoveCustomTrigger(info[#info - 1]) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customActions') end, nil, format('Delete - %s?', name), 'full')
+	options.args.reset = ACH:Execute(L["Defaults"], nil, 8, function(info) E.global.CustomStyleFilters.customActions[info[#info - 1]] = CopyTable({description = '', isExclusive = false, func = ''}) CSF:RegisterCustomTrigger(name) end, nil, format('Reset to Default - %s?', name), 'full')
+	options.args.export = ACH:Input(L["Export Data"], nil, 9, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomStyleFilters', 'customActions')) end)
 
-	optionsPath.customStyleFilters.args.customActions.args[name] = options
+	optionsPath.CustomStyleFilters.args.customActions.args[name] = options
 end
 
 function CSF:GetOptions()
@@ -305,16 +305,16 @@ function CSF:GetOptions()
 	E.Options.args.nameplates.args.filters.args.actions.args.custom = ACH:Group('Custom Action', nil, -1, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customActions) end)
 	E.Options.args.nameplates.args.filters.args.actions.args.custom.inline = true
 
-	for name, db in pairs(CSF.customTriggers) do
+	for name, db in next, CSF.customTriggers do
 		CSF:HandleCustomTriggers(name, db, true)
 	end
 
-	for name, db in pairs(CSF.customActions) do
+	for name, db in next, CSF.customActions do
 		CSF:HandleCustomActions(name, db, true)
 	end
 
 	local SharedTriggerOptions = {
-		name = ACH:Input(L["Name"], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return E.global.customStyleFilters.customTriggers[value] and L["Name Taken"] or true end),
+		name = ACH:Input(L["Name"], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return E.global.CustomStyleFilters.customTriggers[value] and L["Name Taken"] or true end),
 		description = ACH:Input(L["Description"], nil, 3, nil, 'full'),
 		isNegated = ACH:Toggle(L["Is Negated Value (is/isNot)"], nil, 5),
 		func = ACH:Input(L["Function"], nil, 6, 10, 'full', nil, nil, nil, nil, IsFuncStringValid)
@@ -326,25 +326,25 @@ function CSF:GetOptions()
 
 	CSF.SharedTriggerOptions = SharedTriggerOptions
 
-	optionsPath.customStyleFilters = ACH:Group(L["Custom Style Filters"], nil, 2, 'tab')
-	optionsPath.customStyleFilters.args.customTriggers = ACH:Group(L["Custom Triggers"], nil, 1)
-	optionsPath.customStyleFilters.args.customTriggers.args.newTrigger = ACH:Group(L["New Trigger"], nil, 0, nil, function(info) local value = newTriggerInfo[info[#info]] if type(value) == 'boolean' then return value else return tostring(value) end end, function(info, value) newTriggerInfo[info[#info]] = type(value) == 'string' and strtrim(value) or value end)
-	optionsPath.customStyleFilters.args.customTriggers.args.newTrigger.args = CopyTable(SharedTriggerOptions)
-	optionsPath.customStyleFilters.args.customTriggers.args.newTrigger.args.add = ACH:Execute(L["Add"], nil, 0, function() E.global.customStyleFilters.customTriggers[newTriggerInfo.name] = E:CopyTable({}, newTriggerInfo) E.global.customStyleFilters.customTriggers[newTriggerInfo.name].name = nil CSF:RegisterCustomTrigger(newTriggerInfo.name, newTriggerInfo) CSF:CreateTriggerGroup(newTriggerInfo.name, newTriggerInfo) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customTriggers', newTriggerInfo.name) ResetNewTriggerInfo() end, nil, nil, 'full', nil, nil, function() return (newTriggerInfo.name == '' or newTriggerInfo.func == '') end)
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger = ACH:Group(L["Import Trigger"], nil, 1)
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.codeInput = ACH:Input(L["Code"], nil, 1, 8, 'full', function() return EncodedTriggerInfo or '' end, function(_, value) EncodedTriggerInfo = value DecodedTriggerInfo = { TT:DecodeData(value) } end)
+	optionsPath.CustomStyleFilters = ACH:Group(L["Custom Style Filters"], nil, 2, 'tab')
+	optionsPath.CustomStyleFilters.args.customTriggers = ACH:Group(L["Custom Triggers"], nil, 1)
+	optionsPath.CustomStyleFilters.args.customTriggers.args.newTrigger = ACH:Group(L["New Trigger"], nil, 0, nil, function(info) local value = newTriggerInfo[info[#info]] if type(value) == 'boolean' then return value else return tostring(value) end end, function(info, value) newTriggerInfo[info[#info]] = type(value) == 'string' and strtrim(value) or value end)
+	optionsPath.CustomStyleFilters.args.customTriggers.args.newTrigger.args = CopyTable(SharedTriggerOptions)
+	optionsPath.CustomStyleFilters.args.customTriggers.args.newTrigger.args.add = ACH:Execute(L["Add"], nil, 0, function() E.global.CustomStyleFilters.customTriggers[newTriggerInfo.name] = E:CopyTable({}, newTriggerInfo) E.global.CustomStyleFilters.customTriggers[newTriggerInfo.name].name = nil CSF:RegisterCustomTrigger(newTriggerInfo.name, newTriggerInfo) CSF:CreateTriggerGroup(newTriggerInfo.name, newTriggerInfo) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customTriggers', newTriggerInfo.name) ResetNewTriggerInfo() end, nil, nil, 'full', nil, nil, function() return (newTriggerInfo.name == '' or newTriggerInfo.func == '') end)
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger = ACH:Group(L["Import Trigger"], nil, 1)
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.codeInput = ACH:Input(L["Code"], nil, 1, 8, 'full', function() return EncodedTriggerInfo or '' end, function(_, value) EncodedTriggerInfo = value DecodedTriggerInfo = { TT:DecodeData(value) } end)
 
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger = ACH:Group(L["Preview"])
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.inline = true
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args = CopyTable(SharedTriggerOptions)
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.import = ACH:Execute(L["Import"], nil, 0, function() CSF:ImportTrigger(EncodedTriggerInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTriggerInfo end)
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.name.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[1] or '' end
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.description.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].description or '' end
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.isNegated.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].isNegated or false end
-	optionsPath.customStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.func.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].func or '' end
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger = ACH:Group(L["Preview"])
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.inline = true
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args = CopyTable(SharedTriggerOptions)
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.import = ACH:Execute(L["Import"], nil, 0, function() CSF:ImportTrigger(EncodedTriggerInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTriggerInfo end)
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.name.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[1] or '' end
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.description.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].description or '' end
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.isNegated.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].isNegated or false end
+	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.func.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].func or '' end
 
 	local SharedActionOptions = {
-		name = ACH:Input(L["Name"], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return E.global.customStyleFilters.customActions[value] and L['Name Taken'] or true end),
+		name = ACH:Input(L["Name"], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return E.global.CustomStyleFilters.customActions[value] and L['Name Taken'] or true end),
 		description = ACH:Input(L["Description"], nil, 3, nil, 'full'),
 		needsClear = ACH:Toggle(L["Needs Clear Function"], nil, 4),
 		applyFunc = ACH:Input(L["Apply Function"], nil, 6, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
@@ -358,48 +358,53 @@ function CSF:GetOptions()
 
 	CSF.SharedActionOptions = SharedActionOptions
 
-	optionsPath.customStyleFilters.args.customActions = ACH:Group(L["Custom Actions"], nil, 2)
-	optionsPath.customStyleFilters.args.customActions.args.newAction = ACH:Group(L["New Action"], nil, 0, nil, function(info) local value = newActionInfo[info[#info]] if type(value) == 'boolean' then return value else return tostring(value) end end, function(info, value) newActionInfo[info[#info]] = type(value) == 'string' and strtrim(value) or value end)
-	optionsPath.customStyleFilters.args.customActions.args.newAction.args = E:CopyTable({}, SharedActionOptions)
-	optionsPath.customStyleFilters.args.customActions.args.newAction.args.add = ACH:Execute(L["Add"], nil, 0, function() E.global.customStyleFilters.customActions[newActionInfo.name] = E:CopyTable({}, newActionInfo) E.global.customStyleFilters.customActions[newActionInfo.name].name = nil CSF:RegisterCustomAction(newActionInfo.name, newActionInfo) CSF:CreateActionGroup(newActionInfo.name) CSF:HandleCustomActions(newActionInfo.name, newActionInfo, true) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'customStyleFilters', 'customActions', newActionInfo.name) ResetNewActionInfo() end, nil, nil, 'full', nil, nil, function() return (newActionInfo.name == '' or newActionInfo.applyFunc == '' or (newActionInfo.needsClear and newActionInfo.clearFunc == '')) end)
-	optionsPath.customStyleFilters.args.customActions.args.newAction.args.clearFunc.disabled = function() return not newActionInfo.needsClear end
+	optionsPath.CustomStyleFilters.args.customActions = ACH:Group(L["Custom Actions"], nil, 2)
+	optionsPath.CustomStyleFilters.args.customActions.args.newAction = ACH:Group(L["New Action"], nil, 0, nil, function(info) local value = newActionInfo[info[#info]] if type(value) == 'boolean' then return value else return tostring(value) end end, function(info, value) newActionInfo[info[#info]] = type(value) == 'string' and strtrim(value) or value end)
+	optionsPath.CustomStyleFilters.args.customActions.args.newAction.args = E:CopyTable({}, SharedActionOptions)
+	optionsPath.CustomStyleFilters.args.customActions.args.newAction.args.add = ACH:Execute(L["Add"], nil, 0, function() E.global.CustomStyleFilters.customActions[newActionInfo.name] = E:CopyTable({}, newActionInfo) E.global.CustomStyleFilters.customActions[newActionInfo.name].name = nil CSF:RegisterCustomAction(newActionInfo.name, newActionInfo) CSF:CreateActionGroup(newActionInfo.name) CSF:HandleCustomActions(newActionInfo.name, newActionInfo, true) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customActions', newActionInfo.name) ResetNewActionInfo() end, nil, nil, 'full', nil, nil, function() return (newActionInfo.name == '' or newActionInfo.applyFunc == '' or (newActionInfo.needsClear and newActionInfo.clearFunc == '')) end)
+	optionsPath.CustomStyleFilters.args.customActions.args.newAction.args.clearFunc.disabled = function() return not newActionInfo.needsClear end
 
-	optionsPath.customStyleFilters.args.customActions.args.importAction = ACH:Group(L["Import Action"], nil, 1)
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.codeInput = ACH:Input(L["Code"], nil, 1, 8, 'full', function() return EncodedActionInfo or '' end, function(_, value) EncodedActionInfo = value DecodedActionInfo = { TT:DecodeData(value) } end)
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction = ACH:Group(L["Import Action"], nil, 1)
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.codeInput = ACH:Input(L["Code"], nil, 1, 8, 'full', function() return EncodedActionInfo or '' end, function(_, value) EncodedActionInfo = value DecodedActionInfo = { TT:DecodeData(value) } end)
 
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction = ACH:Group(L["Preview"])
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.inline = true
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args = CopyTable(SharedActionOptions)
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args.import = ACH:Execute(L["Import"], nil, 0, function() CSF:ImportAction(EncodedActionInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedActionInfo end)
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction = ACH:Group(L["Preview"])
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.inline = true
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args = CopyTable(SharedActionOptions)
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.import = ACH:Execute(L["Import"], nil, 0, function() CSF:ImportAction(EncodedActionInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedActionInfo end)
 
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args.name.get = function() return DecodedActionInfo and DecodedActionInfo[1] or '' end
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args.description.get = function() return DecodedActionInfo and DecodedActionInfo[2].description or '' end
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args.needsClear.get = function() return DecodedActionInfo and DecodedActionInfo[2].needsClear or true end
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args.applyFunc.get = function() return DecodedActionInfo and DecodedActionInfo[2].applyFunc or '' end
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args.clearFunc.get = function() return DecodedActionInfo and DecodedActionInfo[2].clearFunc or '' end
-	optionsPath.customStyleFilters.args.customActions.args.importAction.args.previewAction.args.clearFunc.disabled = function() return DecodedActionInfo and not DecodedActionInfo[2].needsClear end
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.name.get = function() return DecodedActionInfo and DecodedActionInfo[1] or '' end
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.description.get = function() return DecodedActionInfo and DecodedActionInfo[2].description or '' end
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.needsClear.get = function() return DecodedActionInfo and DecodedActionInfo[2].needsClear or true end
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.applyFunc.get = function() return DecodedActionInfo and DecodedActionInfo[2].applyFunc or '' end
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.clearFunc.get = function() return DecodedActionInfo and DecodedActionInfo[2].clearFunc or '' end
+	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.clearFunc.disabled = function() return DecodedActionInfo and not DecodedActionInfo[2].needsClear end
 
-	for name in next, E.global.customStyleFilters.customTriggers do
+	for name in next, E.global.CustomStyleFilters.customTriggers do
 		CSF:CreateTriggerGroup(name)
 	end
 
-	for name in next, E.global.customStyleFilters.customActions do
+	for name in next, E.global.CustomStyleFilters.customActions do
 		CSF:CreateActionGroup(name)
 	end
 end
 
 function CSF:Initialize()
+	if E.global.customStyleFilters then
+		E:CopyTable(E.global.CustomStyleFilters, E.global.customStyleFilters)
+		E.global.customStyleFilters = nil
+	end
+
 	CSF.customTriggers = {}
 	CSF.customActions = {}
 
 	CSF:InitializeTriggerHooks()
 	CSF:InitializeActionHooks()
 
-	for name, db in pairs(E.global.customStyleFilters.customTriggers) do
+	for name, db in next, E.global.CustomStyleFilters.customTriggers do
 		CSF:RegisterCustomTrigger(name, db)
 	end
 
-	for name, db in pairs(E.global.customStyleFilters.customActions) do
+	for name, db in next, E.global.CustomStyleFilters.customActions do
 		CSF:RegisterCustomAction(name, db)
 	end
 

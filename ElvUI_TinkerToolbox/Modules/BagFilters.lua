@@ -19,7 +19,6 @@ local ToggleFrame = ToggleFrame
 local GameTooltip_Hide = GameTooltip_Hide
 
 local DefaultFilters = {
-	All = { name = L["ALL"], icon = 133875, func = function(location, link, type, subType) return true end },
 	Equipment = { name = L["BAG_FILTER_EQUIPMENT"], icon = 132626, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_ARMOR or type == LE_ITEM_CLASS_WEAPON end },
 	Consumable = { name = L["BAG_FILTER_CONSUMABLES"], icon = 134873, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_CONSUMABLE end },
 	QuestItems = { name = L["ITEM_BIND_QUEST"], icon = 136797, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_QUESTITEM end },
@@ -29,7 +28,8 @@ local DefaultFilters = {
 	NewItems = { name = L["New Items"], icon = 255351, func = function(location, link, type, subType) return C_NewItems.IsNewItem(location.bagID, location.slotIndex) end }
 }
 
-function CBF:SetSlotFilter(f, bagID, slotID)
+function CBF:SetSlotFilter(frame, bagID, slotID)
+	local f = B:GetContainerFrame(frame.isBank)
 	local hideOverlay = true
 
 	if f.FilterHolder.active then
@@ -47,7 +47,9 @@ function CBF:SetSlotFilter(f, bagID, slotID)
 		end
 	end
 
-	f.Bags[bagID][slotID].searchOverlay:SetShown(not hideOverlay)
+	if f.Bags[bagID] then
+		f.Bags[bagID][slotID].searchOverlay:SetShown(not hideOverlay)
+	end
 end
 
 function CBF:SetFilter()
@@ -157,7 +159,7 @@ function CBF:GetOptions()
 	ACH = E.Libs.ACH
 	optionsPath = E.Options.args.TinkerToolbox.args
 
-	optionsPath.custombagfilters = ACH:Group(L["Custom Bag Filters"], nil, 4, 'tab')
+	optionsPath.CustomBagFilters = ACH:Group(L["Custom Bag Filters"], nil, 4, 'tab')
 end
 
 function CBF:Initialize()

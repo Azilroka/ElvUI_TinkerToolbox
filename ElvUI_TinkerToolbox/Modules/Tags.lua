@@ -131,7 +131,7 @@ D.GeneratedKeys.global.CustomTags = true
 D.GeneratedKeys.global.CustomVars = true
 
 function CT:SelectGroup(section, name)
-	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'customtags', section, name)
+	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomTags', section, name)
 end
 
 function CT:ImportTag(dataString)
@@ -250,7 +250,7 @@ function CT:oUF_DeleteVar(var)
 end
 
 function CT:DeleteTagGroup(tag)
-	optionsPath.customtags.args.tagGroup.args[tag] = nil
+	optionsPath.CustomTags.args.tagGroup.args[tag] = nil
 end
 
 function CT:CreateTagGroup(tag)
@@ -313,11 +313,11 @@ function CT:CreateTagGroup(tag)
 	option.args.reset = ACH:Execute(L['Defaults'], nil, 8, function(info) E.global.CustomTags[info[#info - 1]] = CopyTable(G.CustomTags[info[#info - 1]]) CT:oUF_DeleteTag(info[#info - 1]) CT:oUF_CreateTag(E.global.CustomTags[info[#info - 1]]) end, nil, format('Reset to Default - %s?', tag), 'full', nil, nil, nil, function(info) return (not isDefaultTag(info)) or (isDefaultTag(info) and AreTableEquals(E.global.CustomTags[info[#info - 1]], G.CustomTags[info[#info - 1]])) end)
 	option.args.export = ACH:Input(L['Export Data'], nil, 9, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomTags')) end)
 
-	optionsPath.customtags.args.tagGroup.args[tag] = option
+	optionsPath.CustomTags.args.tagGroup.args[tag] = option
 end
 
 function CT:DeleteVarGroup(var)
-	optionsPath.customtags.args.varGroup.args[var] = nil
+	optionsPath.CustomTags.args.varGroup.args[var] = nil
 end
 
 function CT:CreateVarGroup(var)
@@ -359,7 +359,7 @@ function CT:CreateVarGroup(var)
 
 	option.args.delete = ACH:Execute(L['Delete'], nil, 3, function(info) E.global.CustomVars[info[#info - 1]] = nil rawset(oUF.Tags.Vars, info[#info - 1], nil) CT:DeleteVarGroup(info[#info - 1]) CT:SelectGroup('varGroup') end, nil, format('Delete - %s?', var), 'full')
 
-	optionsPath.customtags.args.varGroup.args[var] = option
+	optionsPath.CustomTags.args.varGroup.args[var] = option
 end
 
 function CT:GetOptions()
@@ -388,45 +388,45 @@ function CT:GetOptions()
 		value = ACH:Input(L['Value'], nil, 2, 16, 'full', nil, nil, nil, nil, IsVarStringValid),
 	}
 
-	optionsPath.customtags = ACH:Group(L["Custom Tags"], nil, 1, 'tab')
-	optionsPath.customtags.args.tagGroup = ACH:Group(L['Tags'], nil, 1)
-	optionsPath.customtags.args.tagGroup.args.newTag = ACH:Group(L['New'], nil, 0, nil, function(info) return tostring(newTagInfo[info[#info]] or '') end, function(info, value) newTagInfo[info[#info]] = strtrim(value) end)
+	optionsPath.CustomTags = ACH:Group(L["Custom Tags"], nil, 1, 'tab')
+	optionsPath.CustomTags.args.tagGroup = ACH:Group(L['Tags'], nil, 1)
+	optionsPath.CustomTags.args.tagGroup.args.newTag = ACH:Group(L['New'], nil, 0, nil, function(info) return tostring(newTagInfo[info[#info]] or '') end, function(info, value) newTagInfo[info[#info]] = strtrim(value) end)
 
-	optionsPath.customtags.args.tagGroup.args.newTag.args = CopyTable(SharedTagOptions)
-	optionsPath.customtags.args.tagGroup.args.newTag.args.vars.set = function(_, value) newTagInfo.vars = tonumber(value) or strtrim(value) end
-	optionsPath.customtags.args.tagGroup.args.newTag.args.add = ACH:Execute(L['Add'], nil, 0, function() CT:oUF_CreateTag(newTagInfo.name, newTagInfo) CT:CreateTagGroup(newTagInfo.name, newTagInfo) CT:SelectGroup('tagGroup', newTagInfo.name) newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', '' end, nil, nil, 'full', nil, nil, function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end)
+	optionsPath.CustomTags.args.tagGroup.args.newTag.args = CopyTable(SharedTagOptions)
+	optionsPath.CustomTags.args.tagGroup.args.newTag.args.vars.set = function(_, value) newTagInfo.vars = tonumber(value) or strtrim(value) end
+	optionsPath.CustomTags.args.tagGroup.args.newTag.args.add = ACH:Execute(L['Add'], nil, 0, function() CT:oUF_CreateTag(newTagInfo.name, newTagInfo) CT:CreateTagGroup(newTagInfo.name, newTagInfo) CT:SelectGroup('tagGroup', newTagInfo.name) newTagInfo.name, newTagInfo.events, newTagInfo.vars, newTagInfo.func, newTagInfo.category, newTagInfo.description = '', '', '', '', '', '' end, nil, nil, 'full', nil, nil, function() return not (newTagInfo.name ~= '' and newTagInfo.func ~= '') end)
 
-	optionsPath.customtags.args.tagGroup.args.copyTag = ACH:Group(L['Copy'], nil, 1, nil, function(info) return tostring(copyTagInfo[info[#info]]) end, function(info, value) copyTagInfo[info[#info]] = strtrim(value) end)
-	optionsPath.customtags.args.tagGroup.args.copyTag.args.fromTag = ACH:Input(L['From'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true end)
-	optionsPath.customtags.args.tagGroup.args.copyTag.args.fromTag.validatePopup = true
+	optionsPath.CustomTags.args.tagGroup.args.copyTag = ACH:Group(L['Copy'], nil, 1, nil, function(info) return tostring(copyTagInfo[info[#info]]) end, function(info, value) copyTagInfo[info[#info]] = strtrim(value) end)
+	optionsPath.CustomTags.args.tagGroup.args.copyTag.args.fromTag = ACH:Input(L['From'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Not Found']) or true end)
+	optionsPath.CustomTags.args.tagGroup.args.copyTag.args.fromTag.validatePopup = true
 
-	optionsPath.customtags.args.tagGroup.args.copyTag.args.toTag = ACH:Input(L['To'], nil, 2, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Taken']) or true end)
-	optionsPath.customtags.args.tagGroup.args.copyTag.args.toTag.validatePopup = true
+	optionsPath.CustomTags.args.tagGroup.args.copyTag.args.toTag = ACH:Input(L['To'], nil, 2, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return (value ~= '' and not oUF.Tags.Methods[value] and L['Name Taken']) or true end)
+	optionsPath.CustomTags.args.tagGroup.args.copyTag.args.toTag.validatePopup = true
 
-	optionsPath.customtags.args.tagGroup.args.copyTag.args.add = ACH:Execute(L['Copy'], nil, 5, function() E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag]) CT:oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CT:CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CT:SelectGroup('tagGroup', copyTagInfo.toTag) copyTagInfo.fromTag, copyTagInfo.toTag = '', '' end, nil, nil, 'full', nil, nil, function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end)
+	optionsPath.CustomTags.args.tagGroup.args.copyTag.args.add = ACH:Execute(L['Copy'], nil, 5, function() E.global.CustomTags[copyTagInfo.toTag] = CopyTable(E.global.CustomTags[copyTagInfo.fromTag]) CT:oUF_CreateTag(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CT:CreateTagGroup(copyTagInfo.toTag, E.global.CustomTags[copyTagInfo.toTag]) CT:SelectGroup('tagGroup', copyTagInfo.toTag) copyTagInfo.fromTag, copyTagInfo.toTag = '', '' end, nil, nil, 'full', nil, nil, function() return not (copyTagInfo.fromTag ~= '' and copyTagInfo.toTag ~= '') end)
 
-	optionsPath.customtags.args.tagGroup.args.importTag = ACH:Group(L['Import'], nil, 3)
-	optionsPath.customtags.args.tagGroup.args.importTag.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedTagInfo or '' end, function(_, value) EncodedTagInfo = value DecodedTagInfo = { TT:DecodeData(value) } end)
+	optionsPath.CustomTags.args.tagGroup.args.importTag = ACH:Group(L['Import'], nil, 3)
+	optionsPath.CustomTags.args.tagGroup.args.importTag.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedTagInfo or '' end, function(_, value) EncodedTagInfo = value DecodedTagInfo = { TT:DecodeData(value) } end)
 
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag = ACH:Group(L['Preview'])
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.inline = true
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args = CopyTable(SharedTagOptions)
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.import = ACH:Execute(L['Import'], nil, 0, function() CT:ImportTag(EncodedTagInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTagInfo end)
-	optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args.name.get = function() return DecodedTagInfo and DecodedTagInfo[1] or '' end
+	optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag = ACH:Group(L['Preview'])
+	optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.inline = true
+	optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.args = CopyTable(SharedTagOptions)
+	optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.args.import = ACH:Execute(L['Import'], nil, 0, function() CT:ImportTag(EncodedTagInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTagInfo end)
+	optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.args.name.get = function() return DecodedTagInfo and DecodedTagInfo[1] or '' end
 
 	for option in next, SharedTagOptions do
 		if option ~= 'name' then
-			optionsPath.customtags.args.tagGroup.args.importTag.args.previewTag.args[option].get = function(info) return DecodedTagInfo and DecodedTagInfo[2][info[#info]] or '' end
+			optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.args[option].get = function(info) return DecodedTagInfo and DecodedTagInfo[2][info[#info]] or '' end
 		end
 	end
 
-	optionsPath.customtags.args.varGroup = ACH:Group(L['Variables'], nil, 1)
-	optionsPath.customtags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return tostring(newVarInfo[info[#info]]) end)
-	optionsPath.customtags.args.varGroup.args.newVar.args = CopyTable(SharedVarOptions)
+	optionsPath.CustomTags.args.varGroup = ACH:Group(L['Variables'], nil, 1)
+	optionsPath.CustomTags.args.varGroup.args.newVar = ACH:Group(L['New Variable'], nil, 0, nil, function(info) return tostring(newVarInfo[info[#info]]) end)
+	optionsPath.CustomTags.args.varGroup.args.newVar.args = CopyTable(SharedVarOptions)
 
-	optionsPath.customtags.args.varGroup.args.newVar.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomVars[newVarInfo.name] = newVarInfo.value oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value CT:CreateVarGroup(newVarInfo.name, newVarInfo.value) CT:SelectGroup('varGroup', newVarInfo.name) newVarInfo.name, newVarInfo.value = '', '' end, nil, nil, 'full', nil, nil, function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end)
-	optionsPath.customtags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = strtrim(value) end
-	optionsPath.customtags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or strtrim(value) end
+	optionsPath.CustomTags.args.varGroup.args.newVar.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomVars[newVarInfo.name] = newVarInfo.value oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value CT:CreateVarGroup(newVarInfo.name, newVarInfo.value) CT:SelectGroup('varGroup', newVarInfo.name) newVarInfo.name, newVarInfo.value = '', '' end, nil, nil, 'full', nil, nil, function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end)
+	optionsPath.CustomTags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = strtrim(value) end
+	optionsPath.CustomTags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or strtrim(value) end
 
 	-- Default Custom Tags
 	for Tag in next, G.CustomTags do

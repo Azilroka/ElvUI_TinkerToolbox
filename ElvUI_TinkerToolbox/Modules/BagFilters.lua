@@ -30,6 +30,8 @@ local DefaultFilters = {
 
 function CBF:SetSlotFilter(frame, bagID, slotID)
 	local f = B:GetContainerFrame(frame.isBank)
+	if not (f.Bags[bagID] and f.Bags[bagID][slotID]) then return end
+
 	local hideOverlay = true
 
 	if f.FilterHolder.active then
@@ -47,9 +49,7 @@ function CBF:SetSlotFilter(frame, bagID, slotID)
 		end
 	end
 
-	if f.Bags[bagID] then
-		f.Bags[bagID][slotID].searchOverlay:SetShown(not hideOverlay)
-	end
+	f.Bags[bagID][slotID].searchOverlay:SetShown(not hideOverlay)
 end
 
 function CBF:SetFilter()

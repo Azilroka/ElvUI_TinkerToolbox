@@ -1,7 +1,7 @@
 local TT = unpack(ElvUI_TinkerToolbox)
 local E, L, V, P, G = unpack(ElvUI)
 
-local CBF = TT:NewModule('CustomBagFilters')
+local CBF = TT:NewModule('CustomBagFilters', 'AceEvent-3.0')
 local B = E.Bags
 
 local ACH
@@ -9,24 +9,72 @@ local optionsPath
 
 local next = next
 local ipairs = ipairs
+local strmatch = strmatch
 
 local GetContainerItemInfo = GetContainerItemInfo
 local GetItemInfo = GetItemInfo
+
+local C_Item_DoesItemExist = C_Item and C_Item.DoesItemExist
+local C_Item_GetCurrentItemLevel = C_Item and C_Item.GetCurrentItemLevel
 local GetDetailedItemLevelInfo = GetDetailedItemLevelInfo
 
 local CreateFrame = CreateFrame
 local ToggleFrame = ToggleFrame
 local GameTooltip_Hide = GameTooltip_Hide
 
+local bagIDs = { 0, 1, 2, 3, 4 }
+local bankIDs = { -1, 5, 6, 7, 8, 9, 10 }
+
+if not E.Retail then
+	tinsert(bagIDs, KEYRING_CONTAINER)
+end
+
+if not E.Classic then
+	tinsert(bankIDs, 11)
+end
+
 local DefaultFilters = {
-	Equipment = { name = L["BAG_FILTER_EQUIPMENT"], icon = 132626, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_ARMOR or type == LE_ITEM_CLASS_WEAPON end },
-	Consumable = { name = L["BAG_FILTER_CONSUMABLES"], icon = 134873, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_CONSUMABLE end },
-	QuestItems = { name = L["ITEM_BIND_QUEST"], icon = 136797, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_QUESTITEM end },
-	TradeGoods = { name = L["BAG_FILTER_TRADE_GOODS"], icon = 132906, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_TRADEGOODS or type == LE_ITEM_CLASS_RECIPE or type == LE_ITEM_CLASS_GEM or type == LE_ITEM_CLASS_ITEM_ENHANCEMENT or type == LE_ITEM_CLASS_GLYPH end },
-	BattlePets = { name = L["Battle Pets"], icon = 643856, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_BATTLEPET or (type == LE_ITEM_CLASS_MISCELLANEOUS and subType == 2) end },
-	Miscellaneous = { name = L["Miscellaneous"], icon = 134414, func = function(location, link, type, subType) return type == LE_ITEM_CLASS_MISCELLANEOUS or type == LE_ITEM_CLASS_CONTAINER end },
-	NewItems = { name = L["New Items"], icon = 255351, func = function(location, link, type, subType) return C_NewItems.IsNewItem(location.bagID, location.slotIndex) end }
+	Equipment = { name = L["BAG_FILTER_EQUIPMENT"], icon = 132626, func = function(cache) return cache.classID == LE_ITEM_CLASS_ARMOR or cache.classID == LE_ITEM_CLASS_WEAPON end },
+	Consumable = { name = L["BAG_FILTER_CONSUMABLES"], icon = 134873, func = function(cache) return cache.classID == LE_ITEM_CLASS_CONSUMABLE end },
+	QuestItems = { name = L["ITEM_BIND_QUEST"], icon = 136797, func = function(cache) return cache.classID == LE_ITEM_CLASS_QUESTITEM end },
+	TradeGoods = { name = L["BAG_FILTER_TRADE_GOODS"], icon = 132906, func = function(cache) return cache.classID == LE_ITEM_CLASS_TRADEGOODS or cache.classID == LE_ITEM_CLASS_RECIPE or cache.classID == LE_ITEM_CLASS_GEM or cache.classID == LE_ITEM_CLASS_ITEM_ENHANCEMENT or cache.classID == LE_ITEM_CLASS_GLYPH end },
+	BattlePets = { name = L["Battle Pets"], icon = 643856, func = function(cache) return cache.classID == LE_ITEM_CLASS_BATTLEPET or (cache.classID == LE_ITEM_CLASS_MISCELLANEOUS and cache.subclassID == 2) end },
+	Miscellaneous = { name = L["Miscellaneous"], icon = 134414, func = function(cache) return cache.classID == LE_ITEM_CLASS_MISCELLANEOUS or cache.classID == LE_ITEM_CLASS_CONTAINER end },
+	NewItems = { name = L["New Items"], icon = 255351, func = function(cache) return C_NewItems.IsNewItem(cache.itemLocation.bagID, cache.itemLocation.slotIndex) end }
 }
+
+G.CustomBagFilters = {}
+
+CBF.ItemCache = {}
+CBF.BagCache = {}
+CBF.RefreshBag = {}
+
+function CBF:CacheBagItems(bagID)
+	for slotID = 1, 36 do
+		local cache, _ = {}
+
+		cache.itemLocation = { bagID = bagID, slotIndex = slotID }
+		_, cache.itemCount, _, cache.quality,  cache.readable, cache.lootable, cache.itemLink, _, cache.noValue, cache.itemID, cache.isBound = GetContainerItemInfo(bagID, slotID)
+
+		if cache.itemLink then
+			cache.battlepet = strmatch(cache.itemLink, "battlepet") and true
+			cache.itemString = strmatch(cache.itemLink, cache.battlepet and "battlepet[%-?%d:]+" or "item[%-?%d:]+")
+			cache.itemName, _, _, cache.baseItemLevel, cache.itemMinLevel, cache.itemType, cache.itemSubType, _, cache.itemEquipLoc, _, cache.sellPrice, cache.classID, cache.subclassID, cache.bindType, cache.expacID, cache.setID, cache.isCraftingReagent = GetItemInfo(cache.battlepet and cache.itemID or cache.itemLink)
+
+			if GetDetailedItemLevelInfo then
+				cache.unscaledItemLevel = GetDetailedItemLevelInfo(cache.itemLink)
+			end
+
+			if _G.C_Item then
+				cache.itemLevel = C_Item_DoesItemExist(cache.itemLocation) and C_Item_GetCurrentItemLevel(cache.itemLocation)
+			end
+
+			CBF.ItemCache[cache.itemString] = cache
+		end
+
+		CBF.BagCache[bagID][slotID] = cache
+	end
+end
 
 function CBF:SetSlotFilter(frame, bagID, slotID)
 	local f = B:GetContainerFrame(frame.isBank)
@@ -35,18 +83,7 @@ function CBF:SetSlotFilter(frame, bagID, slotID)
 	local hideOverlay = true
 
 	if f.FilterHolder.active then
-		local icon, itemCount, locked, quality, readable, lootable, itemLink, isFiltered, noValue, itemID, isBound = GetContainerItemInfo(bagID, slotID)
-		local itemName, itemLevel, itemMinLevel, itemType, itemSubType, itemEquipLoc, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent, _
-
-		if itemLink then
-			itemName, _, _, itemLevel, itemMinLevel, itemType, itemSubType, _, itemEquipLoc, _, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = GetItemInfo(itemLink)
-		end
-
-		local location = { bagID = bagID, slotIndex = slotID }
-
-		if itemLink then
-			hideOverlay = f.FilterHolder[f.FilterHolder.active].filter(location, itemLink, classID, subclassID)
-		end
+		hideOverlay = f.FilterHolder[f.FilterHolder.active].filter(CBF.BagCache[bagID][slotID])
 	end
 
 	f.Bags[bagID][slotID].searchOverlay:SetShown(not hideOverlay)
@@ -162,11 +199,39 @@ function CBF:GetOptions()
 	optionsPath.CustomBagFilters = ACH:Group(L["Custom Bag Filters"], nil, 4, 'tab')
 end
 
+function CBF:BAG_UPDATE(_, bagID)
+	CBF.RefreshBag[bagID] = true
+end
+
+function CBF:BAG_UPDATE_DELAYED()
+	for bagID in next, CBF.RefreshBag do
+		CBF:CacheBagItems(bagID)
+		CBF.RefreshBag[bagID] = nil
+	end
+end
+
+function CBF:BANKFRAME_OPENED()
+	for bagID in next, bankIDs do
+		CBF.BagCache[bagID] = { isBank = true }
+		CBF:CacheBagItems(bagID)
+	end
+end
+
 function CBF:Initialize()
 	if not E.private.bags.enable then return end
 
+	for _, bagID in next, bagIDs do
+		CBF.BagCache[bagID] = {}
+		CBF:CacheBagItems(bagID)
+	end
+
+	B:RegisterEvent('BANKFRAME_OPENED')
+
 	CBF:AddMenuButton()
 	CBF:AddMenuButton(true)
+
+	CBF:RegisterEvent('BAG_UPDATE')
+	CBF:RegisterEvent('BAG_UPDATE_DELAYED')
 
 	hooksecurefunc(B, 'UpdateSlot', function(_, frame, bagID, slotID) CBF:SetSlotFilter(frame, bagID, slotID) end)
 end

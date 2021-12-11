@@ -212,7 +212,10 @@ end
 
 function CBF:BANKFRAME_OPENED()
 	for bagID in next, bankIDs do
-		CBF.BagCache[bagID] = { isBank = true }
+		if not CBF.BagCache[bagID] then
+			CBF.BagCache[bagID] = { isBank = true }
+		end
+
 		CBF:CacheBagItems(bagID)
 	end
 end

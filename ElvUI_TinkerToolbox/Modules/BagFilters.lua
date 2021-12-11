@@ -211,7 +211,7 @@ function CBF:BAG_UPDATE_DELAYED()
 end
 
 function CBF:BANKFRAME_OPENED()
-	for bagID in next, bankIDs do
+	for _, bagID in next, bankIDs do
 		if not CBF.BagCache[bagID] then
 			CBF.BagCache[bagID] = { isBank = true }
 		end

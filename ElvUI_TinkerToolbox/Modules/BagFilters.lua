@@ -228,13 +228,12 @@ function CBF:Initialize()
 		CBF:CacheBagItems(bagID)
 	end
 
-	B:RegisterEvent('BANKFRAME_OPENED')
-
 	CBF:AddMenuButton()
 	CBF:AddMenuButton(true)
 
 	CBF:RegisterEvent('BAG_UPDATE')
 	CBF:RegisterEvent('BAG_UPDATE_DELAYED')
+	CBF:RegisterEvent('BANKFRAME_OPENED')
 
 	hooksecurefunc(B, 'UpdateSlot', function(_, frame, bagID, slotID) CBF:SetSlotFilter(frame, bagID, slotID) end)
 end

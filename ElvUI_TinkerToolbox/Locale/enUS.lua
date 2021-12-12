@@ -20,3 +20,11 @@ L['Delete'] = true
 L['Copy'] = true
 L['Events'] = true
 L['Defaults'] = true
+
+L["BAG_FILTER_CONSUMABLES"] = "Consumables"
+L["BAG_FILTER_EQUIPMENT"] = "Equipment"
+L["BAG_FILTER_TRADE_GOODS"] = "Trade Goods"
+L["ITEM_BIND_QUEST"] = "Quest Item"
+L["Miscellaneous"] = true
+L["Battle Pets"] = true
+L["New Items"] = true

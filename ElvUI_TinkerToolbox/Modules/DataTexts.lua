@@ -85,7 +85,7 @@ function CDT:DeleteDT(name)
 end
 
 function CDT:DeleteGroup(name)
-	optionsPath.CustomDataTexts.args.dtGroup.args[name] = nil
+	optionsPath.CustomDataTexts.args[name] = nil
 end
 
 function CDT:CreateGroup(name)
@@ -140,7 +140,7 @@ function CDT:CreateGroup(name)
 	option.args.delete = ACH:Execute(L['Delete'], nil, 0, function(info) E.global.CustomDataTexts[info[#info - 1]] = nil CDT:DeleteGroup(info[#info - 1]) CDT:SelectGroup('dtGroup') end, nil, format('Delete - %s?', name), 'full')
 	option.args.export = ACH:Input(L['Export Data'], nil, -1, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomDataTexts')) end)
 
-	optionsPath.CustomDataTexts.args.dtGroup.args[name] = option
+	optionsPath.CustomDataTexts.args[name] = option
 end
 
 function CDT:GetOptions()
@@ -166,25 +166,24 @@ function CDT:GetOptions()
 		end
 	end
 
-	optionsPath.CustomDataTexts = ACH:Group(L["Custom DataTexts"], nil, 3, 'tab')
+	optionsPath.CustomDataTexts = ACH:Group(L["Custom DataTexts"], nil, 3)
 
-	optionsPath.CustomDataTexts.args.dtGroup = ACH:Group(L['DataTexts'], nil, 1)
-	optionsPath.CustomDataTexts.args.dtGroup.args.new = ACH:Group(L['New'], nil, 0, nil, function(info) return tostring(newInfo[info[#info]] or '') end, function(info, value) newInfo[info[#info]] = strtrim(value) end)
-	optionsPath.CustomDataTexts.args.dtGroup.args.new.args = CopyTable(SharedOptions)
-	optionsPath.CustomDataTexts.args.dtGroup.args.new.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomDataTexts[newInfo.name] = CopyTable(newInfo) E.global.CustomDataTexts[newInfo.name].name = nil CDT:CreateDT(newInfo.name, newInfo) CDT:CreateGroup(newInfo.name, newInfo) CDT:SelectGroup('dtGroup', newInfo.name) end, nil, nil, 'full', nil, nil, function() return not (newInfo.name ~= '' and (newInfo.eventFunc ~= '' or newInfo.updateFunc ~= '')) end)
+	optionsPath.CustomDataTexts.args.new = ACH:Group(L['New'], nil, 0, nil, function(info) return tostring(newInfo[info[#info]] or '') end, function(info, value) newInfo[info[#info]] = strtrim(value) end)
+	optionsPath.CustomDataTexts.args.new.args = CopyTable(SharedOptions)
+	optionsPath.CustomDataTexts.args.new.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomDataTexts[newInfo.name] = CopyTable(newInfo) E.global.CustomDataTexts[newInfo.name].name = nil CDT:CreateDT(newInfo.name, newInfo) CDT:CreateGroup(newInfo.name, newInfo) CDT:SelectGroup('dtGroup', newInfo.name) end, nil, nil, 'full', nil, nil, function() return not (newInfo.name ~= '' and (newInfo.eventFunc ~= '' or newInfo.updateFunc ~= '')) end)
 
-	optionsPath.CustomDataTexts.args.dtGroup.args.import = ACH:Group(L['Import'], nil, 3)
-	optionsPath.CustomDataTexts.args.dtGroup.args.import.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedInfo or '' end, function(_, value) EncodedInfo = value DecodedInfo = { TT:DecodeData(value) } end)
+	optionsPath.CustomDataTexts.args.import = ACH:Group(L['Import'], nil, 3)
+	optionsPath.CustomDataTexts.args.import.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedInfo or '' end, function(_, value) EncodedInfo = value DecodedInfo = { TT:DecodeData(value) } end)
 
-	optionsPath.CustomDataTexts.args.dtGroup.args.import.args.preview = ACH:Group(L['Preview'])
-	optionsPath.CustomDataTexts.args.dtGroup.args.import.args.preview.inline = true
-	optionsPath.CustomDataTexts.args.dtGroup.args.import.args.preview.args = CopyTable(SharedOptions)
-	optionsPath.CustomDataTexts.args.dtGroup.args.import.args.preview.args.import = ACH:Execute(L['Import'], nil, 0, function() TT:DecodeData(EncodedInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedInfo end)
-	optionsPath.CustomDataTexts.args.dtGroup.args.import.args.preview.args.name.get = function() return DecodedInfo and DecodedInfo[1] or '' end
+	optionsPath.CustomDataTexts.args.import.args.preview = ACH:Group(L['Preview'])
+	optionsPath.CustomDataTexts.args.import.args.preview.inline = true
+	optionsPath.CustomDataTexts.args.import.args.preview.args = CopyTable(SharedOptions)
+	optionsPath.CustomDataTexts.args.import.args.preview.args.import = ACH:Execute(L['Import'], nil, 0, function() TT:DecodeData(EncodedInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedInfo end)
+	optionsPath.CustomDataTexts.args.import.args.preview.args.name.get = function() return DecodedInfo and DecodedInfo[1] or '' end
 
 	for option in next, SharedOptions do
 		if option ~= 'name' then
-			optionsPath.CustomDataTexts.args.dtGroup.args.import.args.preview.args[option].get = function(info) return DecodedInfo and DecodedInfo[2][info[#info]] or '' end
+			optionsPath.CustomDataTexts.args.import.args.preview.args[option].get = function(info) return DecodedInfo and DecodedInfo[2][info[#info]] or '' end
 		end
 	end
 

@@ -329,6 +329,13 @@ function CBF:GetOptions()
 
 	optionsPath.CustomBagFilters.args.help = ACH:Group(L['Help'], nil, 4)
 
+	local COLOR = E:ClassColor(E.myclass, true)
+	local COLOR1 = format('|c%s', COLOR.colorStr)
+
+	for i, name in ipairs({ "itemCount", "quality", "readable", "lootable", "itemLink", "noValue", "itemID", "isBound", "itemName", "baseItemLevel", "itemLevel", "unscaledItemLevel", "itemMinLevel", "itemType", "itemSubType", "itemEquipLoc", "sellPrice", "classID", "subclassID", "bindType", "expacID", "setID", "isCraftingReagent" }) do
+		optionsPath.CustomBagFilters.args.help.args[name] = ACH:Description(format('%scache.%s|r: %s', COLOR1, name, L["cache."..name]), i, 'medium')
+	end
+
 	optionsPath.CustomBagFilters.args.spacer = ACH:Group(' ', nil, 5, nil, nil, nil, true)
 
 	for name in next, E.global.CustomBagFilters do

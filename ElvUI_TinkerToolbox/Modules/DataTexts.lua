@@ -12,7 +12,6 @@ local format = format
 local loadstring = loadstring
 local gmatch = gmatch
 local strtrim = strtrim
-local rawset = rawset
 local next = next
 local concat = table.concat
 local CopyTable = CopyTable
@@ -36,24 +35,6 @@ D.GeneratedKeys.global.CustomDataTexts = true
 
 function CDT:SelectGroup(section, name)
 	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomDataTexts', section, name)
-end
-
-local function AreTableEquals(currentTable, defaultTable)
-	for option, value in pairs(defaultTable) do
-		if type(value) == 'table' then
-			value = AreTableEquals(currentTable[option], value)
-		end
-
-		if currentTable[option] ~= value then
-			return false
-		end
-	end
-
-	return true
-end
-
-local function isDefault(info)
-	return G.CustomDataTexts[info[#info - 1]]
 end
 
 local function buildFunction(str)
@@ -156,7 +137,7 @@ function CDT:CreateGroup(name)
 		end
 	end
 
-	option.args.delete = ACH:Execute(L['Delete'], nil, 0, function(info) E.global.CustomDataTexts[info[#info - 1]] = nil CDT:DeleteGroup(info[#info - 1]) CDT:SelectGroup('dtGroup') end, nil, format('Delete - %s?', name), 'full', nil, nil, nil, isDefaultTag)
+	option.args.delete = ACH:Execute(L['Delete'], nil, 0, function(info) E.global.CustomDataTexts[info[#info - 1]] = nil CDT:DeleteGroup(info[#info - 1]) CDT:SelectGroup('dtGroup') end, nil, format('Delete - %s?', name), 'full')
 	option.args.export = ACH:Input(L['Export Data'], nil, -1, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomDataTexts')) end)
 
 	optionsPath.CustomDataTexts.args.dtGroup.args[name] = option
@@ -179,7 +160,7 @@ function CDT:GetOptions()
 		colorUpdate = ACH:Input(L['Color Update Function'], nil, 10, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
 	}
 
-	for option, optTable in next, SharedOptions do
+	for _, optTable in next, SharedOptions do
 		if optTable.validate then
 			optTable.validatePopup = true
 		end
@@ -207,7 +188,7 @@ function CDT:GetOptions()
 		end
 	end
 
-	for name, data in next, E.global.CustomDataTexts do
+	for name in next, E.global.CustomDataTexts do
 		CDT:CreateGroup(name)
 	end
 end

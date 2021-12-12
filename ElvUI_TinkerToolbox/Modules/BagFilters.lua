@@ -299,7 +299,7 @@ function CBF:GetOptions()
 	optionsPath = E.Options.args.TinkerToolbox.args
 
 	SharedOptions = {
-		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return not DefaultFilters[value] and L['Name Taken'] or true end),
+		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return DefaultFilters[value] and L['Name Taken'] or true end),
 		icon = ACH:Input(L['Icon ID or File Path'], nil, 2, nil, 'full'),
 		description = ACH:Input(L['Description'], nil, 3, nil, 'full'),
 		func = ACH:Input(L['Function'], nil, 4, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
@@ -327,7 +327,9 @@ function CBF:GetOptions()
 	optionsPath.CustomBagFilters.args.import.args.preview.args.import = ACH:Execute(L['Import'], nil, 0, function() TT:DecodeData(EncodedInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedInfo end)
 	optionsPath.CustomBagFilters.args.import.args.preview.args.name.get = function() return DecodedInfo and DecodedInfo[1] or '' end
 
-	optionsPath.CustomBagFilters.args.spacer = ACH:Group(' ', nil, 4, nil, nil, nil, true)
+	optionsPath.CustomBagFilters.args.help = ACH:Group(L['Help'], nil, 4)
+
+	optionsPath.CustomBagFilters.args.spacer = ACH:Group(' ', nil, 5, nil, nil, nil, true)
 
 	for name in next, E.global.CustomBagFilters do
 		CBF:CreateGroup(name)

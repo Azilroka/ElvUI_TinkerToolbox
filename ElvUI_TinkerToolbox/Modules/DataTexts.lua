@@ -181,6 +181,8 @@ function CDT:GetOptions()
 	optionsPath.CustomDataTexts.args.import.args.preview.args.import = ACH:Execute(L['Import'], nil, 0, function() TT:DecodeData(EncodedInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedInfo end)
 	optionsPath.CustomDataTexts.args.import.args.preview.args.name.get = function() return DecodedInfo and DecodedInfo[1] or '' end
 
+	optionsPath.CustomDataTexts.args.spacer = ACH:Group(' ', nil, 4, nil, nil, nil, true)
+
 	for option in next, SharedOptions do
 		if option ~= 'name' then
 			optionsPath.CustomDataTexts.args.import.args.preview.args[option].get = function(info) return DecodedInfo and DecodedInfo[2][info[#info]] or '' end

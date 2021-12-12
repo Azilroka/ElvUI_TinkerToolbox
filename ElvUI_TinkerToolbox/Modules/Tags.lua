@@ -414,6 +414,8 @@ function CT:GetOptions()
 	optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.args.import = ACH:Execute(L['Import'], nil, 0, function() CT:ImportTag(EncodedTagInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedTagInfo end)
 	optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.args.name.get = function() return DecodedTagInfo and DecodedTagInfo[1] or '' end
 
+	optionsPath.CustomTags.args.tagGroup.args.spacer = ACH:Group(' ', nil, 4, nil, nil, nil, true)
+
 	for option in next, SharedTagOptions do
 		if option ~= 'name' then
 			optionsPath.CustomTags.args.tagGroup.args.importTag.args.previewTag.args[option].get = function(info) return DecodedTagInfo and DecodedTagInfo[2][info[#info]] or '' end
@@ -427,6 +429,8 @@ function CT:GetOptions()
 	optionsPath.CustomTags.args.varGroup.args.newVar.args.add = ACH:Execute(L['Add'], nil, 0, function() E.global.CustomVars[newVarInfo.name] = newVarInfo.value oUF.Tags.Vars[newVarInfo.name] = newVarInfo.value CT:CreateVarGroup(newVarInfo.name, newVarInfo.value) CT:SelectGroup('varGroup', newVarInfo.name) newVarInfo.name, newVarInfo.value = '', '' end, nil, nil, 'full', nil, nil, function() return not (newVarInfo.name ~= '' and newVarInfo.value ~= '') end)
 	optionsPath.CustomTags.args.varGroup.args.newVar.args.name.set = function(_, value) newVarInfo.name = strtrim(value) end
 	optionsPath.CustomTags.args.varGroup.args.newVar.args.value.set = function(_, value) newVarInfo.value = tonumber(value) or strtrim(value) end
+
+	optionsPath.CustomTags.args.varGroup.args.spacer = ACH:Group(' ', nil, 2, nil, nil, nil, true)
 
 	-- Default Custom Tags
 	for Tag in next, G.CustomTags do

@@ -331,6 +331,7 @@ function CSF:GetOptions()
 	optionsPath.CustomStyleFilters.args.customTriggers.args.newTrigger = ACH:Group(L["New Trigger"], nil, 0, nil, function(info) local value = newTriggerInfo[info[#info]] if type(value) == 'boolean' then return value else return tostring(value) end end, function(info, value) newTriggerInfo[info[#info]] = type(value) == 'string' and strtrim(value) or value end)
 	optionsPath.CustomStyleFilters.args.customTriggers.args.newTrigger.args = CopyTable(SharedTriggerOptions)
 	optionsPath.CustomStyleFilters.args.customTriggers.args.newTrigger.args.add = ACH:Execute(L["Add"], nil, 0, function() E.global.CustomStyleFilters.customTriggers[newTriggerInfo.name] = E:CopyTable({}, newTriggerInfo) E.global.CustomStyleFilters.customTriggers[newTriggerInfo.name].name = nil CSF:RegisterCustomTrigger(newTriggerInfo.name, newTriggerInfo) CSF:CreateTriggerGroup(newTriggerInfo.name, newTriggerInfo) E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'CustomStyleFilters', 'customTriggers', newTriggerInfo.name) ResetNewTriggerInfo() end, nil, nil, 'full', nil, nil, function() return (newTriggerInfo.name == '' or newTriggerInfo.func == '') end)
+
 	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger = ACH:Group(L["Import Trigger"], nil, 1)
 	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.codeInput = ACH:Input(L["Code"], nil, 1, 8, 'full', function() return EncodedTriggerInfo or '' end, function(_, value) EncodedTriggerInfo = value DecodedTriggerInfo = { TT:DecodeData(value) } end)
 
@@ -342,6 +343,8 @@ function CSF:GetOptions()
 	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.description.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].description or '' end
 	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.isNegated.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].isNegated or false end
 	optionsPath.CustomStyleFilters.args.customTriggers.args.importTrigger.args.previewTrigger.args.func.get = function() return DecodedTriggerInfo and DecodedTriggerInfo[2].func or '' end
+
+	optionsPath.CustomStyleFilters.args.customTriggers.args.spacer = ACH:Group(' ', nil, 2, nil, nil, nil, true)
 
 	local SharedActionOptions = {
 		name = ACH:Input(L["Name"], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return E.global.CustomStyleFilters.customActions[value] and L['Name Taken'] or true end),
@@ -378,6 +381,8 @@ function CSF:GetOptions()
 	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.applyFunc.get = function() return DecodedActionInfo and DecodedActionInfo[2].applyFunc or '' end
 	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.clearFunc.get = function() return DecodedActionInfo and DecodedActionInfo[2].clearFunc or '' end
 	optionsPath.CustomStyleFilters.args.customActions.args.importAction.args.previewAction.args.clearFunc.disabled = function() return DecodedActionInfo and not DecodedActionInfo[2].needsClear end
+
+	optionsPath.CustomStyleFilters.args.customActions.args.spacer = ACH:Group(' ', nil, 2, nil, nil, nil, true)
 
 	for name in next, E.global.CustomStyleFilters.customTriggers do
 		CSF:CreateTriggerGroup(name)

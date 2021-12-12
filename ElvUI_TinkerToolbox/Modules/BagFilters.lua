@@ -256,9 +256,8 @@ function CBF:CreateGroup(name)
 	option.args.name.set = function(info, value)
 		if value ~= '' and value ~= info[#info - 1] then
 			if not E.global.CustomBagFilters[value] then
-				E:CopyTable(E.global.CustomBagFilters[value], E.global.CustomBagFilters[info[#info - 1]])
-
-				CBF:CreateFilter(value, E.global.CustomBagFilters[value])
+				E.global.CustomBagFilters[name].name = value
+				CBF:CreateFilter(value, E.global.CustomBagFilters[info[#info - 1]])
 				CBF:DeleteFilter(info[#info - 1])
 
 				CBF:CreateGroup(value)
@@ -281,7 +280,7 @@ function CBF:CreateGroup(name)
 	end
 
 	option.args.delete = ACH:Execute(L['Delete'], nil, 0, function(info) CBF:DeleteFilter(info[#info - 1]) CBF:DeleteGroup(info[#info - 1]) CBF:SelectGroup() end, nil, format('Delete - %s?', name), 'full')
-	option.args.export = ACH:Input(L['Export Data'], nil, -1, 8, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomBagFilters')) end)
+	option.args.export = ACH:Input(L['Export Data'], nil, -1, 10, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomBagFilters')) end)
 
 	optionsPath.CustomBagFilters.args[name] = option
 end
@@ -302,7 +301,7 @@ function CBF:GetOptions()
 		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return DefaultFilters[value] and L['Name Taken'] or true end),
 		icon = ACH:Input(L['Icon ID or File Path'], nil, 2, nil, 'full'),
 		description = ACH:Input(L['Description'], nil, 3, nil, 'full'),
-		func = ACH:Input(L['Function'], nil, 4, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+		func = ACH:Input(L['Function'], nil, 4, 20, 'full', nil, nil, nil, nil, IsFuncStringValid),
 	}
 
 	optionsPath.CustomBagFilters = ACH:Group(L["Custom Bag Filters"], nil, 4)

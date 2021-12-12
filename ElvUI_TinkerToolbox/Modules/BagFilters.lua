@@ -93,8 +93,9 @@ function CBF:CacheBagItems(bagID)
 			end
 
 			CBF.ItemCache[cache.itemString] = cache
-			CBF.BagCache[bagID][slotID] = cache
 		end
+
+		CBF.BagCache[bagID][slotID] = cache
 	end
 end
 
@@ -162,7 +163,7 @@ function CBF:AddFilterButtons(isBank)
 			button:StyleButton(nil, true)
 			button:SetScript('OnEnter', CBF.Tooltip_Show)
 			button:SetScript('OnLeave', GameTooltip_Hide)
-			button:SetScript('OnClick', function(s, btn) CBF:SetFilter(btn ~= 'RightButton' and s.filter) end)
+			button:SetScript('OnClick', function(s, btn) CBF:SetFilter(btn ~= 'RightButton' and s.filter, isBank) end)
 			button:SetScript('OnHide', CBF.ResetFilter)
 			button:SetMotionScriptsWhileDisabled(true)
 			button:SetID(numButtons)
@@ -173,7 +174,7 @@ function CBF:AddFilterButtons(isBank)
 		button.ttText = filterInfo.name
 		button.ttText2 = L["Left Click to enable."]
 		button.ttText2desc = L["Right Click to disable."]
-		button.isBank = f.isBank
+		button.isBank = isBank
 		button.filter = name
 
 		B:SetButtonTexture(button, filterInfo.icon)

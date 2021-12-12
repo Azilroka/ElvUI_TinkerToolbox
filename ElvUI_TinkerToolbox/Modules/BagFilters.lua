@@ -1,7 +1,7 @@
 local TT = unpack(ElvUI_TinkerToolbox)
 local E, L, V, P, G = unpack(ElvUI)
 
-local CBF = TT:NewModule('CustomBagFilters', 'AceEvent-3.0')
+local CBF = TT:NewModule('CustomBagFilters', 'AceEvent-3.0', 'AceHook-3.0')
 local B = E.Bags
 
 local ACH, SharedOptions
@@ -367,6 +367,10 @@ function CBF:BANKFRAME_CLOSED()
 	CBF.SetFilter(B.BankFrame, nil, true)
 end
 
+function CBF:Bag_UpdateSlot()
+	CBF:SetFilter(CBF.ActiveFilter)
+end
+
 function CBF:Initialize()
 	if not E.private.bags.enable then return end
 
@@ -391,5 +395,5 @@ function CBF:Initialize()
 	CBF:RegisterEvent('BANKFRAME_OPENED')
 	CBF:RegisterEvent('BANKFRAME_CLOSED')
 
-	hooksecurefunc(B, 'UpdateSlot', function(_, frame, bagID, slotID) CBF:SetFilter(CBF.ActiveFilter) end)
+	CBF:SecureHook(B, 'UpdateSlot', 'Bag_UpdateSlot')
 end

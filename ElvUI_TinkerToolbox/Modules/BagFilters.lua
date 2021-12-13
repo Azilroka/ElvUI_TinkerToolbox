@@ -53,9 +53,8 @@ local DefaultFilters = {
 	NewItems = { name = L["New Items"], icon = 255351, func = "function(cache) return cache.itemLocation and C_NewItems.IsNewItem(cache.itemLocation.bagID, cache.itemLocation.slotIndex) end" }
 }
 
-G.CustomBagFilters = {}
+G.CustomBagFilters = { DisplayType = 'Filters', Filters = {} }
 
-CBF.ItemCache = {}
 CBF.BagCache = {}
 CBF.RefreshBag = {}
 CBF.FilterFunctions = {}
@@ -91,8 +90,6 @@ function CBF:CacheBagItems(bagID)
 			if _G.C_Item then
 				cache.itemLevel = C_Item_DoesItemExist(cache.itemLocation) and C_Item_GetCurrentItemLevel(cache.itemLocation)
 			end
-
-			CBF.ItemCache[cache.itemString] = cache
 		end
 
 		CBF.BagCache[bagID][slotID] = cache
@@ -128,6 +125,10 @@ function CBF:Tooltip_Show()
 	GameTooltip:ClearLines()
 	GameTooltip:AddLine(self.ttText)
 
+	if self.ttTextdesc then
+		GameTooltip:AddLine(self.ttTextdesc)
+	end
+
 	if self.ttText2 then
 		if self.ttText2desc then
 			GameTooltip:AddLine(' ')
@@ -152,7 +153,7 @@ function CBF:AddFilterButtons(isBank)
 		f.FilterHolder[i]:Hide()
 	end
 
-	for name, filterInfo in next, E.global.CustomBagFilters do
+	for name, filterInfo in next, E.global.CustomBagFilters.Filters do
 		local button = f.FilterHolder[numButtons]
 
 		if not button then
@@ -172,12 +173,13 @@ function CBF:AddFilterButtons(isBank)
 		end
 
 		button.ttText = filterInfo.name
+		button.ttTextdesc = (filterInfo.desc ~= '' or filterInfo.desc ~= nil) and filterInfo.desc or nil
 		button.ttText2 = L["Left Click to enable."]
 		button.ttText2desc = L["Right Click to disable."]
 		button.isBank = isBank
 		button.filter = name
 
-		B:SetButtonTexture(button, filterInfo.icon)
+		B:SetButtonTexture(button, filterInfo.icon or 134400)
 
 		button:Show()
 		button:ClearAllPoints()
@@ -192,8 +194,9 @@ function CBF:AddFilterButtons(isBank)
 		lastContainerButton = button
 	end
 
-	holder:Size(((buttonSize + buttonSpacing) * (numButtons - 1)) + buttonSpacing, buttonSize + (buttonSpacing * 2))
-	holder:SetShown((numButtons - 1) ~= 0)
+	if numButtons > 1 then
+		holder:Size(((buttonSize + buttonSpacing) * (numButtons - 1)) + buttonSpacing, buttonSize + (buttonSpacing * 2))
+	end
 end
 
 function CBF:AddMenuButton(isBank)
@@ -232,7 +235,7 @@ function CBF:RefreshButtons()
 end
 
 function CBF:CreateFilter(name, filterInfo)
-	E.global.CustomBagFilters[name] = CopyTable(filterInfo)
+	E.global.CustomBagFilters.Filters[name] = CopyTable(filterInfo)
 
 	CBF.FilterFunctions[name] = buildFunction(filterInfo.func)
 
@@ -251,14 +254,14 @@ function CBF:DeleteGroup(name)
 end
 
 function CBF:CreateGroup(name)
-	local option = ACH:Group(E.global.CustomBagFilters[name].name, nil, nil, nil, function(info) local db = E.global.CustomBagFilters[info[#info - 1]] return tostring(db and db[info[#info]] or '') end)
+	local option = ACH:Group(E.global.CustomBagFilters.Filters[name].name, nil, nil, nil, function(info) local db = E.global.CustomBagFilters.Filters[info[#info - 1]] return tostring(db and db[info[#info]] or '') end)
 	option.args = CopyTable(SharedOptions)
 
 	option.args.name.set = function(info, value)
 		if value ~= '' and value ~= info[#info - 1] then
-			if not E.global.CustomBagFilters[value] then
-				E.global.CustomBagFilters[name].name = value
-				CBF:CreateFilter(value, E.global.CustomBagFilters[info[#info - 1]])
+			if not E.global.CustomBagFilters.Filters[value] then
+				E.global.CustomBagFilters.Filters[name].name = value
+				CBF:CreateFilter(value, E.global.CustomBagFilters.Filters[info[#info - 1]])
 				CBF:DeleteFilter(info[#info - 1])
 
 				CBF:CreateGroup(value)
@@ -269,19 +272,19 @@ function CBF:CreateGroup(name)
 		end
 	end
 
-	option.args.description.set = function(info, value) E.global.CustomBagFilters[info[#info - 1]][info[#info]] = strtrim(value) end
-	option.args.icon.set = function(info, value) E.global.CustomBagFilters[info[#info - 1]][info[#info]] = strtrim(value) CBF:RefreshButtons() end
+	option.args.description.set = function(info, value) E.global.CustomBagFilters.Filters[info[#info - 1]][info[#info]] = strtrim(value) end
+	option.args.icon.set = function(info, value) E.global.CustomBagFilters.Filters[info[#info - 1]][info[#info]] = strtrim(value) CBF:RefreshButtons() end
 	option.args.func.set = function(info, value)
 		value = strtrim(value)
-		if E.global.CustomBagFilters[info[#info - 1]][info[#info]] ~= value then
-			E.global.CustomBagFilters[info[#info - 1]][info[#info]] = value
+		if E.global.CustomBagFilters.Filters[info[#info - 1]][info[#info]] ~= value then
+			E.global.CustomBagFilters.Filters[info[#info - 1]][info[#info]] = value
 
-			CBF:CreateFilter(name, E.global.CustomBagFilters[info[#info - 1]])
+			CBF:CreateFilter(name, E.global.CustomBagFilters.Filters[info[#info - 1]])
 		end
 	end
 
 	option.args.delete = ACH:Execute(L['Delete'], nil, 0, function(info) CBF:DeleteFilter(info[#info - 1]) CBF:DeleteGroup(info[#info - 1]) CBF:SelectGroup() end, nil, format('Delete - %s?', name), 'full')
-	option.args.export = ACH:Input(L['Export Data'], nil, -1, 10, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomBagFilters')) end)
+	option.args.export = ACH:Input(L['Export Data'], nil, -1, 10, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomBagFilters', 'Filters')) end)
 
 	optionsPath.CustomBagFilters.args[name] = option
 end
@@ -306,6 +309,7 @@ function CBF:GetOptions()
 	}
 
 	optionsPath.CustomBagFilters = ACH:Group(L["Custom Bag Filters"], nil, 4)
+--	optionsPath.CustomBagFilters.args.DisplayType = ACH:Select(L["Display Type"], nil, 0, { Bags = 'Bags', Filters = 'Filters'}, nil, nil, function(info) return E.global.CustomBagFilters[info[#info]] end, function(info, value) E.global.CustomBagFilters[info[#info]] = value end)
 
 	optionsPath.CustomBagFilters.args.new = ACH:Group(L['New'], nil, 0, nil, function(info) return tostring(newInfo[info[#info]] or '') end, function(info, value) newInfo[info[#info]] = strtrim(value) end)
 	optionsPath.CustomBagFilters.args.new.args = CopyTable(SharedOptions)
@@ -338,7 +342,7 @@ function CBF:GetOptions()
 
 	optionsPath.CustomBagFilters.args.spacer = ACH:Group(' ', nil, 5, nil, nil, nil, true)
 
-	for name in next, E.global.CustomBagFilters do
+	for name in next, E.global.CustomBagFilters.Filters do
 		CBF:CreateGroup(name)
 	end
 end
@@ -387,9 +391,13 @@ function CBF:Initialize()
 	CBF:AddMenuButton()
 	CBF:AddMenuButton(true)
 
-	for name, filterInfo in next, E.global.CustomBagFilters do
+	for name, filterInfo in next, E.global.CustomBagFilters.Filters do
 		CBF:CreateFilter(name, filterInfo)
 	end
+
+	--if E.global.CustomBagFilters.DisplayType == 'Bags' then
+	--	B.Layout = CBF.Layout
+	--end
 
 	CBF:RegisterEvent('BAG_UPDATE')
 	CBF:RegisterEvent('BAG_UPDATE_DELAYED')

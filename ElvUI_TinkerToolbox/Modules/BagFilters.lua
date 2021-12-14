@@ -244,7 +244,7 @@ end
 
 function CBF:DeleteFilter(name)
 	CBF.FilterFunctions[name] = nil
-	E.global.CustomBagFilters[name] = nil
+	E.global.CustomBagFilters.Filters[name] = nil
 
 	CBF:RefreshButtons()
 end

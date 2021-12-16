@@ -10,7 +10,6 @@ local unpack = unpack
 local type = type
 local next = next
 local strsplit = strsplit
-local strsplittable = strsplittable
 local tonumber = tonumber
 local format = format
 local strjoin = strjoin
@@ -49,7 +48,7 @@ function TT:ImportData(dataString)
 	local db = E.global
 
 	if dbKey then
-		for _, v in next, strsplittable('\a', dbKey) do
+		for _, v in next, { strsplit('\a', dbKey) } do
 			db = db[tonumber(v) or v]
 			if not db then db = {} end
 		end
@@ -68,7 +67,7 @@ function TT:ExportData(name, dbKey)
 	local db = E.global
 
 	if dbKey then
-		for _, v in next, strsplittable('\a', dbKey) do
+		for _, v in next, { strsplit('\a', dbKey) }  do
 			db = db[tonumber(v) or v]
 		end
 	end

@@ -18,6 +18,7 @@ local CopyTable = CopyTable
 
 local GetContainerItemInfo = GetContainerItemInfo
 local GetItemInfo = GetItemInfo
+local GetItemStats = GetItemStats
 
 local C_Item_DoesItemExist = C_Item and C_Item.DoesItemExist
 local C_Item_GetCurrentItemLevel = C_Item and C_Item.GetCurrentItemLevel
@@ -58,6 +59,34 @@ G.CustomBagFilters = { DisplayType = 'Filters', Filters = {} }
 CBF.BagCache = {}
 CBF.RefreshBag = {}
 CBF.FilterFunctions = {}
+CBF.InventorySlotsLocations = {}
+
+local EQSlots = {
+	INVTYPE_HEAD = 1,
+	INVTYPE_NECK = 2,
+	INVTYPE_SHOULDER = 3,
+	INVTYPE_BODY = 4,
+	INVTYPE_CHEST = 5,
+	INVTYPE_WAIST = 6,
+	INVTYPE_LEGS = 7,
+	INVTYPE_FEET = 8,
+	INVTYPE_WRIST = 9,
+	INVTYPE_HAND = 10,
+	INVTYPE_FINGER = { 11, 12 },
+	INVTYPE_TRINKET = { 13, 14 },
+	INVTYPE_WEAPON = { 16, 17 },
+	INVTYPE_SHIELD = 17,
+	INVTYPE_RANGED = 16,
+	INVTYPE_CLOAK = 15,
+	INVTYPE_2HWEAPON = 16,
+	INVTYPE_TABARD = 19,
+	INVTYPE_ROBE = 5,
+	INVTYPE_WEAPONMAINHAND = 16,
+	INVTYPE_WEAPONOFFHAND = 16,
+	INVTYPE_HOLDABLE = 17,
+	INVTYPE_THROWN = 16,
+	INVTYPE_RANGEDRIGHT = 16,
+}
 
 local emptyTable = {}
 
@@ -82,13 +111,29 @@ function CBF:CacheBagItems(bagID)
 			cache.battlepet = strmatch(cache.itemLink, "battlepet") and true
 			cache.itemString = strmatch(cache.itemLink, cache.battlepet and "battlepet[%-?%d:]+" or "item[%-?%d:]+")
 			cache.itemName, _, _, cache.baseItemLevel, cache.itemMinLevel, cache.itemType, cache.itemSubType, _, cache.itemEquipLoc, _, cache.sellPrice, cache.classID, cache.subclassID, cache.bindType, cache.expacID, cache.setID, cache.isCraftingReagent = GetItemInfo(cache.battlepet and cache.itemID or cache.itemLink)
+			cache.stats = GetItemStats(cache.itemLink)
 
 			if GetDetailedItemLevelInfo then
 				cache.unscaledItemLevel = GetDetailedItemLevelInfo(cache.itemLink)
 			end
 
-			if _G.C_Item then
-				cache.itemLevel = C_Item_DoesItemExist(cache.itemLocation) and C_Item_GetCurrentItemLevel(cache.itemLocation)
+			if _G.C_Item and C_Item_DoesItemExist(cache.itemLocation) then
+				cache.itemLevel = C_Item_GetCurrentItemLevel(cache.itemLocation)
+
+				if EQSlots[cache.itemEquipLoc] then
+					local minSlot, maxSlot
+					if type(EQSlots[cache.itemEquipLoc]) == 'table' then
+						minSlot, maxSlot = unpack(EQSlots[cache.itemEquipLoc])
+					else
+						minSlot = EQSlots[cache.itemEquipLoc]
+					end
+					for slot = minSlot, (maxSlot or minSlot) do
+						cache.isItemUpgrade = CBF.InventorySlotsLocations[slot] and cache.itemLevel > (C_Item_DoesItemExist(CBF.InventorySlotsLocations[slot]) and C_Item_GetCurrentItemLevel(CBF.InventorySlotsLocations[slot]) or 0)
+						if cache.isItemUpgrade then
+							break
+						end
+					end
+				end
 			end
 		end
 
@@ -148,8 +193,7 @@ function CBF:AddFilterButtons(isBank)
 	local lastContainerButton
 	local holder = f.FilterHolder
 
-
-	for i in ipairs(holder) do
+	for i in ipairs(f.FilterHolder) do
 		f.FilterHolder[i]:Hide()
 	end
 
@@ -214,7 +258,7 @@ function CBF:AddMenuButton(isBank)
 	button:Point("RIGHT", f.sortButton, "LEFT", -5, 0)
 	button:SetTemplate()
 	button:StyleButton(nil, true)
-	B:SetButtonTexture(button, 413571)
+	B:SetButtonTexture(button, E.Retail and 413571 or 136460)
 	button.ttText = L.Filter
 	button:SetScript('OnEnter', B.Tooltip_Show)
 	button:SetScript('OnLeave', GameTooltip_Hide)
@@ -378,6 +422,10 @@ end
 
 function CBF:Initialize()
 	if not E.private.bags.enable then return end
+
+	for i = EQUIPPED_FIRST, EQUIPPED_LAST do
+		CBF.InventorySlotsLocations[i] = ItemLocation:CreateFromEquipmentSlot(i)
+	end
 
 	for _, bagID in next, bagIDs do
 		CBF.BagCache[bagID] = {}

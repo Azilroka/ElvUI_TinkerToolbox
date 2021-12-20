@@ -47,7 +47,7 @@ end
 local DefaultFilters = {
 	Equipment = { name = L["BAG_FILTER_EQUIPMENT"], icon = 132626, func = "function(cache) return cache.classID == LE_ITEM_CLASS_ARMOR or cache.classID == LE_ITEM_CLASS_WEAPON end" },
 	Consumable = { name = L["BAG_FILTER_CONSUMABLES"], icon = 134873, func = "function(cache) return cache.classID == LE_ITEM_CLASS_CONSUMABLE end" },
-	QuestItems = { name = L["ITEM_BIND_QUEST"], icon = 136797, func = "function(cache) return cache.classID == LE_ITEM_CLASS_QUESTITEM end" },
+	QuestItems = { name = L["ITEM_BIND_QUEST"], icon = 136797, func = "function(cache) return cache.classID == LE_ITEM_CLASS_QUESTITEM or cache.bindType == LE_ITEM_BIND_QUEST end" },
 	TradeGoods = { name = L["BAG_FILTER_TRADE_GOODS"], icon = 132906, func = "function(cache) return cache.classID == LE_ITEM_CLASS_TRADEGOODS or cache.classID == LE_ITEM_CLASS_RECIPE or cache.classID == LE_ITEM_CLASS_GEM or cache.classID == LE_ITEM_CLASS_ITEM_ENHANCEMENT or cache.classID == LE_ITEM_CLASS_GLYPH end" },
 	BattlePets = { name = L["Battle Pets"], icon = 643856, func = "function(cache) return cache.classID == LE_ITEM_CLASS_BATTLEPET or (cache.classID == LE_ITEM_CLASS_MISCELLANEOUS and cache.subclassID == 2) end" },
 	Miscellaneous = { name = L["Miscellaneous"], icon = 134414, func = "function(cache) return cache.classID == LE_ITEM_CLASS_MISCELLANEOUS or cache.classID == LE_ITEM_CLASS_CONTAINER end" },

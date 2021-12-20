@@ -6,7 +6,7 @@ local LibCompress = E.Libs.Compress
 local LibBase64 = E.Libs.Base64
 
 local ACH, optionsPath
-local gsub, strupper = gsub, strupper
+local gsub, strupper, wipe = gsub, strupper, wipe
 
 CPD.config = {
 	profileType = 'profile',
@@ -53,58 +53,71 @@ function CPD.GetCustomExport(info)
 	return tbl
 end
 
+local customImportOptions, importNeedsRefresh = {}
 function CPD.GetCustomImport()
-	local _, _, profileData = D:Decode(CPD.config.importedData)
-	local tbl = {}
+	if importNeedsRefresh then
+		wipe(customImportOptions)
+		local _, _, profileData = D:Decode(CPD.config.importedData)
 
-	for name, value in next, (profileData or {}) do
-		if type(value) == 'table'  then
-			tbl[name] = OriginalOptions[name] or CPD:GetLocaleName(name) or gsub(name, "^%l", strupper)
+		for name, value in next, (profileData or {}) do
+			if type(value) == 'table'  then
+				customImportOptions[name] = OriginalOptions[name] or CPD:GetLocaleName(name) or gsub(name, "^%l", strupper)
+			end
+		end
+		importNeedsRefresh = nil
+	end
+
+	return customImportOptions
+end
+
+function CPD:ImportTableCount(profileData, bypass)
+	local count = 0
+	for _, value in next, profileData do
+		if bypass or type(value) == 'table' then
+			count = count + 1
 		end
 	end
 
-	return tbl
+	return count
 end
 
 function CPD:ImportProfile(dataString)
-	local profileType, profileKey, profileData = D:Decode(dataString)
+	local profileType, _, profileData = D:Decode(dataString)
 
 	if not profileData or type(profileData) ~= 'table' then
 		return
 	end
 
-	local hasData = next(CPD.config.importCustom)
+	local allCount, customCount = CPD:ImportTableCount(profileData), CPD:ImportTableCount(CPD.config.importCustom, true)
 
-	if hasData then
-		if profileType and ((profileType == 'profile' and profileKey) or profileType ~= 'profile') then
-			profileData = E:FilterTableFromBlacklist(profileData, D.blacklistedKeys[profileType])
+	if allCount ~= customCount and profileType then
+		profileData = E:FilterTableFromBlacklist(profileData, D.blacklistedKeys[profileType])
 
-			local defaults = profileType == 'profile' and P or profileType == 'private' and V or G
-			local db = profileType == 'profile' and 'db' or profileType
+		local defaults = profileType == 'profile' and P or profileType == 'private' and V or G
+		local db = profileType == 'profile' and 'db' or (profileType == 'filters' or profileType == 'styleFilters') and 'global' or profileType
 
-			for dataType, value in next, profileData do -- Clear unwanted data
-				if type(value) == 'table' then
-					if not CPD.config.importCustom[dataType] then
-						profileData[dataType] = nil
-					end
+		for dataType, value in next, profileData do -- Clear unwanted data
+			if type(value) == 'table' then
+				if not CPD.config.importCustom[dataType] then
+					profileData[dataType] = nil
 				end
-			end
-
-			for dataType, value in next, profileData do -- Set wanted data
-				if type(value) == 'table' then
-					local cleanTable = E:CopyTable({}, defaults[dataType]) -- Clean Table to not merge data into defaults.
-
-					E[db][dataType] = E:CopyTable(cleanTable, profileData[dataType])
-				end
-			end
-
-			if profileType == 'private' or profileType == 'global' then
-				E:StaticPopup_Show('IMPORT_RL')
-			else
-				E:StaggeredUpdateAll()
 			end
 		end
-	else -- All Data Reroute to ElvUI.
+
+		for dataType, value in next, profileData do -- Set wanted data
+			if type(value) == 'table' then
+				local cleanTable = E:CopyTable({}, defaults[dataType]) -- Clean Table to not merge data into defaults.
+
+				E[db][dataType] = E:CopyTable(cleanTable, profileData[dataType])
+			end
+		end
+
+		if profileType == 'private' or profileType == 'global' then
+			E:StaticPopup_Show('IMPORT_RL')
+		else
+			E:StaggeredUpdateAll()
+		end
+	else -- No or All Data Rerouted to ElvUI. Means they don't read.
 		D:ImportProfile(dataString)
 	end
 end
@@ -115,7 +128,7 @@ function CPD:GetProfileData(profileType)
 	end
 
 	local db = profileType == 'profile' and 'ElvDB' or 'ElvPrivateDB'
-	local defaults = profileType == 'profile' and P or V
+	local defaults = profileType == 'profile' and P or profileType == 'private' and V or G
 	local profileData = {}
 
 	if CPD.config.exportType == 'compare' then
@@ -196,7 +209,7 @@ function CPD:GetOptions()
 	optionsPath.customprofiledistributor.args.exportTools.args.export.args.exportedData = ACH:Input('', nil, 2, 40, 'full', function() return CPD.config.exportedData end, nil, nil, function() return CPD.config.exportedData == '' end)
 
 	optionsPath.customprofiledistributor.args.importTools = ACH:Group(L["Import Tools"], nil, 1)
-	optionsPath.customprofiledistributor.args.importTools.args.importedData = ACH:Input('', nil, 1, 40, 'full', function() return CPD.config.importedData end, function(_, value) CPD.config.importedData = value end)
+	optionsPath.customprofiledistributor.args.importTools.args.importedData = ACH:Input('', nil, 1, 40, 'full', function() return CPD.config.importedData end, function(_, value) importNeedsRefresh = true CPD.config.importedData = value end)
 	optionsPath.customprofiledistributor.args.importTools.args.importedDesc = ACH:Description(function() if CPD.config.importedData then local _, name = D:Decode(CPD.config.importedData) return name end end, 2, 'medium', nil, nil, nil, nil, nil, function() return not CPD.config.importedData end)
 	optionsPath.customprofiledistributor.args.importTools.args.customImport = ACH:MultiSelect('', nil, 4, CPD.GetCustomImport, nil, nil, function(_, key) return CPD.config.importCustom[key] end, function(_, key, value) CPD.config.importCustom[key] = value or nil end, nil, function() return not CPD.config.importedData end)
 

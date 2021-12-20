@@ -209,8 +209,8 @@ function CPD:GetOptions()
 	optionsPath.customprofiledistributor.args.exportTools.args.export.args.exportedData = ACH:Input('', nil, 2, 40, 'full', function() return CPD.config.exportedData end, nil, nil, function() return CPD.config.exportedData == '' end)
 
 	optionsPath.customprofiledistributor.args.importTools = ACH:Group(L["Import Tools"], nil, 1)
-	optionsPath.customprofiledistributor.args.importTools.args.importedData = ACH:Input('', nil, 1, 40, 'full', function() return CPD.config.importedData end, function(_, value) importNeedsRefresh = true CPD.config.importedData = value end)
-	optionsPath.customprofiledistributor.args.importTools.args.importedDesc = ACH:Description(function() if CPD.config.importedData then local _, name = D:Decode(CPD.config.importedData) return name end end, 2, 'medium', nil, nil, nil, nil, nil, function() return not CPD.config.importedData end)
+	optionsPath.customprofiledistributor.args.importTools.args.importedData = ACH:Input('', nil, 1, 40, 'full', function() return CPD.config.importedData end, function(_, value) importNeedsRefresh = true CPD.config.importedData = value CPD.config.importName = select(2, D:Decode(value)) end)
+	optionsPath.customprofiledistributor.args.importTools.args.importedDesc = ACH:Description(function() return CPD.config.importName or '' end, 2, 'medium', nil, nil, nil, nil, nil, function() return not CPD.config.importedData end)
 	optionsPath.customprofiledistributor.args.importTools.args.customImport = ACH:MultiSelect('', nil, 4, CPD.GetCustomImport, nil, nil, function(_, key) return CPD.config.importCustom[key] end, function(_, key, value) CPD.config.importCustom[key] = value or nil end, nil, function() return not CPD.config.importedData end)
 
 	optionsPath.customprofiledistributor.args.importTools.args.importExec = ACH:Execute(L["Import"], nil, 5, function() CPD:ImportProfile(CPD.config.importedData) end, nil, nil, 'full', nil, nil, function() return not CPD.config.importedData end)

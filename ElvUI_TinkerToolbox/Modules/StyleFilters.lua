@@ -301,8 +301,8 @@ function CSF:GetOptions()
 	ACH, C = E.Libs.ACH, E.OptionsUI[1]
 	optionsPath = E.Options.args.TinkerToolbox.args
 
-	E.Options.args.nameplates.args.filters.args.triggers.args.custom = ACH:Group('Custom Trigger', nil, -1, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers = E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers or {} E.global.nameplate.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customTriggers) end)
-	E.Options.args.nameplates.args.filters.args.actions.args.custom = ACH:Group('Custom Action', nil, -1, nil, function(info) return E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] end, function(info, value) E.global.nameplate.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customActions) end)
+	E.Options.args.nameplates.args.filters.args.triggers.args.custom = ACH:Group('Custom Trigger', nil, -1, nil, function(info) return E.global.nameplates.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] end, function(info, value) E.global.nameplates.filters[C.SelectedNameplateStyleFilter].triggers = E.global.nameplates.filters[C.SelectedNameplateStyleFilter].triggers or {} E.global.nameplates.filters[C.SelectedNameplateStyleFilter].triggers[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customTriggers) end)
+	E.Options.args.nameplates.args.filters.args.actions.args.custom = ACH:Group('Custom Action', nil, -1, nil, function(info) return E.global.nameplates.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] end, function(info, value) E.global.nameplates.filters[C.SelectedNameplateStyleFilter].actions[info[#info]] = value NP:ConfigureAll() end, nil, function() return not next(CSF.customActions) end)
 	E.Options.args.nameplates.args.filters.args.actions.args.custom.inline = true
 
 	for name, db in next, CSF.customTriggers do
@@ -412,6 +412,4 @@ function CSF:Initialize()
 	for name, db in next, E.global.CustomStyleFilters.customActions do
 		CSF:RegisterCustomAction(name, db)
 	end
-
-	E.Libs.EP:RegisterPlugin('ElvUI_CustomStyleFilters', CSF.GetOptions)
 end

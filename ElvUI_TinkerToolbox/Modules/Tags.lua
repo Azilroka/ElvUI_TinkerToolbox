@@ -193,7 +193,7 @@ local function IsVarStringValid(_, varString)
 end
 
 function CT:oUF_CreateTag(tagName, tagTable)
-	E:CopyTable(E.global.CustomTags[tagName], tagTable)
+	E.global.CustomTags[tagName] = E:CopyTable({}, tagTable)
 	E.global.CustomTags[tagName].name = nil
 
 	E:AddTagInfo(tagName, tagTable.category ~= '' and tagTable.category or 'Custom Tags', tagTable.description or '')

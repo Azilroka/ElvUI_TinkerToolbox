@@ -2,7 +2,7 @@
 ## Interface-Classic: 11401
 ## Interface-BCC: 20502
 ## Title: |cfffe7b2cElvUI|r |cffffffffTinker Toolbox|r
-## Version: 1.13
+## Version: 1.14
 ## Author: Azilroka, Blazeflack
 ## RequiredDeps: ElvUI
 ## X-Curse-Project-ID: 473233

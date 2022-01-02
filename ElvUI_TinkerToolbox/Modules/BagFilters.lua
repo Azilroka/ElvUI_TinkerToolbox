@@ -333,12 +333,8 @@ function CBF:CreateGroup(name)
 	optionsPath.CustomBagFilters.args[name] = option
 end
 
-function CBF:SelectGroup(name)
-	if name then
-		E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomBagFilters', name)
-	else
-		E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomBagFilters')
-	end
+function CBF:SelectGroup(...)
+	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomBagFilters', ...)
 end
 
 function CBF:GetOptions()

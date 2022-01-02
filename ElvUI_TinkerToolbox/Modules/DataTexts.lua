@@ -33,8 +33,8 @@ CDT.CustomDT = {}
 -- Set Distributor to Export
 D.GeneratedKeys.global.CustomDataTexts = true
 
-function CDT:SelectGroup(section, name)
-	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomDataTexts', section, name)
+function CDT:SelectGroup(...)
+	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomDataTexts', ...)
 end
 
 local function buildFunction(str)

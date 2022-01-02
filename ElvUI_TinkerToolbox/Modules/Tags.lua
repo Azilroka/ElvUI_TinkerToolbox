@@ -130,8 +130,8 @@ G.CustomVars = {}
 D.GeneratedKeys.global.CustomTags = true
 D.GeneratedKeys.global.CustomVars = true
 
-function CT:SelectGroup(section, name)
-	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomTags', section, name)
+function CT:SelectGroup(...)
+	E.Libs.AceConfigDialog:SelectGroup('ElvUI', 'TinkerToolbox', 'CustomTags', ...)
 end
 
 function CT:ImportTag(dataString)

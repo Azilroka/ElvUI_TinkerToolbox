@@ -32,7 +32,7 @@
 -- Read through this code for further usage help.
 -- (The documentation IS the code)
 
-local E, L, V, P, G = unpack(ElvUI)
+local E = ElvUI[1]
 local lib = {}
 lib.revision = 1
 

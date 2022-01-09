@@ -5,7 +5,7 @@ local D = E:GetModule('Distributor')
 local LibCompress = E.Libs.Compress
 local LibBase64 = E.Libs.Base64
 
-local ACH, optionsPath
+local ACH, optionsPath = E.Libs.ACH
 local gsub, strupper, wipe = gsub, strupper, wipe
 
 CPD.config = {
@@ -173,7 +173,6 @@ function CPD:GetProfileExport(profileType)
 end
 
 function CPD:GetOptions()
-	ACH = E.Libs.ACH
 	optionsPath = E.Options.args.TinkerToolbox.args
 
 	for _, name in next, E.OriginalOptions do

@@ -6,7 +6,7 @@ local CSF = TT:NewModule('CustomStyleFilters')
 local NP = E:GetModule('NamePlates')
 local D = E:GetModule('Distributor')
 
-local ACH, optionsPath
+local ACH, optionsPath = E.Libs.ACH
 
 local strtrim = strtrim
 local format = format
@@ -302,7 +302,7 @@ function CSF:CreateActionGroup(name)
 end
 
 function CSF:GetOptions()
-	ACH, C = E.Libs.ACH, E.OptionsUI[1]
+	C = E.OptionsUI[1]
 	optionsPath = E.Options.args.TinkerToolbox.args
 
 	E.Options.args.nameplates.args.filters.args.triggers.args.custom = ACH:Group('Custom Trigger', nil, -1, nil, function(info) return E.global.nameplates.filters[C.StyleFilterSelected].triggers[info[#info]] end, function(info, value) E.global.nameplates.filters[C.StyleFilterSelected].triggers = E.global.nameplates.filters[C.StyleFilterSelected].triggers or {} E.global.nameplates.filters[C.StyleFilterSelected].triggers[info[#info]] = value NP:ConfigureAll() end, C.StyleFilterDisabledFilter, function() return not next(CSF.customTriggers) end)
@@ -326,7 +326,7 @@ function CSF:GetOptions()
 
 	SharedTriggerOptions.name.validatePopup = true
 	SharedTriggerOptions.func.validatePopup = true
-	SharedTriggerOptions.func.luaHighlighting = true
+	SharedTriggerOptions.func.luaSyntax = true
 
 	CSF.SharedTriggerOptions = SharedTriggerOptions
 
@@ -359,9 +359,9 @@ function CSF:GetOptions()
 	}
 
 	SharedActionOptions.applyFunc.validatePopup = true
-	SharedActionOptions.applyFunc.luaHighlighting = true
+	SharedActionOptions.applyFunc.luaSyntax = true
 	SharedActionOptions.clearFunc.validatePopup = true
-	SharedActionOptions.clearFunc.luaHighlighting = true
+	SharedActionOptions.clearFunc.luaSyntax = true
 
 	CSF.SharedActionOptions = SharedActionOptions
 

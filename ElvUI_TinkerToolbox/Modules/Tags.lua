@@ -28,7 +28,7 @@ local copyTagInfo = { fromTag = '', toTag = ''}
 local formattedText = { CURRENT = 'current', CURRENT_PERCENT = 'current-percent', PERCENT = 'percent' }
 local validator = CreateFrame('Frame')
 
-local ACH, SharedTagOptions, SharedVarOptions, EncodedTagInfo, DecodedTagInfo
+local ACH, SharedTagOptions, SharedVarOptions, EncodedTagInfo, DecodedTagInfo = E.Libs.ACH
 local optionsPath
 
 -- oUF Defines
@@ -363,7 +363,6 @@ function CT:CreateVarGroup(var)
 end
 
 function CT:GetOptions()
-	ACH = E.Libs.ACH
 	optionsPath = E.Options.args.TinkerToolbox.args
 
 	SharedTagOptions = {
@@ -375,13 +374,13 @@ function CT:GetOptions()
 		func = ACH:Input(L['Function'], nil, 6, 10, 'full', nil, nil, nil, nil, IsFuncStringValid)
 	}
 
-	for option, optTable in next, SharedTagOptions do
+	for _, optTable in next, SharedTagOptions do
 		if optTable.validate then
 			optTable.validatePopup = true
 		end
 	end
 
-	SharedTagOptions.func.luaHighlighting = true
+	SharedTagOptions.func.luaSyntax = true
 
 	SharedVarOptions = {
 		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) return oUF.Tags.Vars[strtrim(value)] and L['Name Taken'] or true end),

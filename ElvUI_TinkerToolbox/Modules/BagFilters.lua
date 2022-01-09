@@ -4,7 +4,7 @@ local E, L, V, P, G = unpack(ElvUI)
 local CBF = TT:NewModule('CustomBagFilters', 'AceEvent-3.0', 'AceHook-3.0')
 local B = E.Bags
 
-local ACH, SharedOptions
+local ACH, SharedOptions = E.Libs.ACH
 local optionsPath
 
 local next = next
@@ -338,7 +338,6 @@ function CBF:SelectGroup(...)
 end
 
 function CBF:GetOptions()
-	ACH = E.Libs.ACH
 	optionsPath = E.Options.args.TinkerToolbox.args
 
 	SharedOptions = {

@@ -21,7 +21,7 @@ local badEvents = {}
 
 local validator = CreateFrame('Frame')
 
-local ACH, SharedOptions
+local ACH, SharedOptions = E.Libs.ACH
 local optionsPath
 
 local newInfo = { name = '', eventFunc = '', updateFunc = ''}
@@ -144,7 +144,6 @@ function CDT:CreateGroup(name)
 end
 
 function CDT:GetOptions()
-	ACH = E.Libs.ACH
 	optionsPath = E.Options.args.TinkerToolbox.args
 
 	SharedOptions = {

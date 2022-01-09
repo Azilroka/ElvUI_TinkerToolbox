@@ -6,6 +6,7 @@
 ## X-Curse-Project-ID: 473233
 ## X-Wago-ID: Xb6X8o6p
 
+Libraries\FAIAP\FAIAP.lua
 Locale\enUS.lua
 
 Shared.lua

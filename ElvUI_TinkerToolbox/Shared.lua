@@ -1,6 +1,7 @@
 local _, Engine = ...
 local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
 local TT = _G.LibStub('AceAddon-3.0'):NewAddon('TinkerToolbox', 'AceEvent-3.0', 'AceHook-3.0', 'AceTimer-3.0', 'AceSerializer-3.0')
+local ACH = E.Libs.ACH
 
 Engine[1] = TT
 
@@ -91,8 +92,7 @@ function TT:CallModuleFunction(module, func)
 end
 
 function TT:GetOptions()
-	local ACH = E.Libs.ACH
-
+	E.Libs.AceGUI.luaSyntax = E.Libs.luaSyntax
 	E.Options.args.TinkerToolbox = ACH:Group(L["Tinker Toolbox"], nil, 6, 'tab')
 
 	for _, module in TT:IterateModules() do

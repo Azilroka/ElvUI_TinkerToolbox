@@ -605,9 +605,7 @@ function lib.colorCodeCode(code, colorTable, caretPosition)
 			break
 		end
 
-		if tokenType == tokens.TOKEN_COLORCODE_START or tokenType == tokens.TOKEN_COLORCODE_STOP or tokenType == tokens.TOKEN_UNKNOWN then
-			-- ignore color codes
-		elseif tokenType == tokens.TOKEN_LINEBREAK or tokenType == tokens.TOKEN_WHITESPACE then
+		if tokenType == tokens.TOKEN_LINEBREAK or tokenType == tokens.TOKEN_WHITESPACE then
 			if tokenType == tokens.TOKEN_LINEBREAK then
 				numLines = numLines + 1
 			end
@@ -617,7 +615,7 @@ function lib.colorCodeCode(code, colorTable, caretPosition)
 			tsize = tsize + 1
 			workingTable[tsize] = str
 			totalLen = totalLen + stringlen(str)
-		else
+		elseif tokenType ~= tokens.TOKEN_COLORCODE_START and tokenType ~= tokens.TOKEN_COLORCODE_STOP and tokenType ~= tokens.TOKEN_UNKNOWN then
 			local str = stringsub(code, pos, nextPos - 1)
 
 			prevTokenWidth = nextPos - pos
@@ -772,9 +770,7 @@ function lib.indentCode(code, tabWidth, colorTable, caretPosition)
 				workingTable2[tsize2] = s
 				totalLen2 = totalLen2 + stringlen(s)
 			end
-		elseif tokenType == tokens.TOKEN_COLORCODE_START or tokenType == tokens.TOKEN_COLORCODE_STOP or tokenType == tokens.TOKEN_UNKNOWN then
-			-- skip these, though they shouldn't be encountered here anyway
-		else
+		elseif tokenType ~= tokens.TOKEN_COLORCODE_START and tokenType ~= tokens.TOKEN_COLORCODE_STOP and tokenType ~= tokens.TOKEN_UNKNOWN then
 			hitNonWhitespace = true
 
 			local str = stringsub(code, pos, nextPos - 1)
@@ -846,6 +842,7 @@ function lib.indentCode(code, tabWidth, colorTable, caretPosition)
 		end
 		pos = nextPos
 	end
+
 	return table.concat(workingTable), newCaretPosition
 end
 
@@ -905,10 +902,12 @@ function lib.stripWowColors(code)
 		end
 		pos = pos + 1
 	end
+
 	if pos >= selectionStart then
 		tsize = tsize + 1
 		workingTable[tsize] = stringsub(code, selectionStart, pos - 1)
 	end
+
 	return table.concat(workingTable)
 end
 
@@ -917,6 +916,7 @@ function lib.decode(code)
 		code = lib.stripWowColors(code)
 		code = stringgsub(code, "||", "|")
 	end
+
 	return code or ""
 end
 
@@ -924,6 +924,7 @@ function lib.encode(code)
 	if code then
 		code = stringgsub(code, "|", "||")
 	end
+
 	return code or ""
 end
 
@@ -932,6 +933,7 @@ function lib.stripWowColorsWithPos(code, pos)
 	code = lib.stripWowColors(code)
 	pos = stringfind(code, "\2", 1, 1)
 	code = stringdelete(code, pos, pos)
+
 	return code, pos
 end
 
@@ -945,8 +947,8 @@ function lib.padWithLinebreaks(code)
 		end
 		return code .. "\n", true
 	end
-	return code .. "\n\n", true
 
+	return code .. "\n\n", true
 end
 
 local defaultColorTable

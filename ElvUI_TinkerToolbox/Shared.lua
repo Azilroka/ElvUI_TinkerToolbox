@@ -18,6 +18,8 @@ local strjoin = strjoin
 local LibCompress = E.Libs.Compress
 local LibBase64 = E.Libs.Base64
 
+E.Options.args.TinkerToolbox = ACH:Group(L["Tinker Toolbox"], nil, 6, 'tab')
+
 function TT:JoinDBKey(...)
 	local tbl = ...
 	if type(tbl) ~= 'table' then tbl = { ... } end
@@ -93,7 +95,6 @@ end
 
 function TT:GetOptions()
 	E.Libs.AceGUI.luaSyntax = E.Libs.luaSyntax
-	E.Options.args.TinkerToolbox = ACH:Group(L["Tinker Toolbox"], nil, 6, 'tab')
 
 	for _, module in TT:IterateModules() do
 		if module.GetOptions then

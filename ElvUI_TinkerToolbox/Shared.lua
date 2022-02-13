@@ -1,6 +1,6 @@
 local _, Engine = ...
 local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
-local TT = _G.LibStub('AceAddon-3.0'):NewAddon('TinkerToolbox', 'AceEvent-3.0', 'AceHook-3.0', 'AceTimer-3.0', 'AceSerializer-3.0')
+local TT = E:NewModule('TinkerToolbox', 'AceEvent-3.0', 'AceHook-3.0', 'AceTimer-3.0', 'AceSerializer-3.0')
 local ACH = E.Libs.ACH
 
 Engine[1] = TT
@@ -103,7 +103,7 @@ function TT:GetOptions()
 	end
 end
 
-function TT:PLAYER_LOGIN()
+function TT:Initialize()
 	for _, module in TT:IterateModules() do
 		if module.Initialize then
 			TT:CallModuleFunction(module, module.Initialize)
@@ -113,4 +113,4 @@ function TT:PLAYER_LOGIN()
 	E.Libs.EP:RegisterPlugin('ElvUI_TinkerToolbox', TT.GetOptions)
 end
 
-TT:RegisterEvent('PLAYER_LOGIN')
+E:RegisterModule(TT:GetName())

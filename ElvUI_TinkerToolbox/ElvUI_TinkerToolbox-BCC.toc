@@ -1,6 +1,6 @@
 ## Interface: 20503
 ## Title: |cff1784d1ElvUI|r |cfd9b9b9bTBC|r |cffffffffTinker Toolbox|r
-## Version: 1.16
+## Version: 1.17
 ## Author: Azilroka, Blazeflack
 ## RequiredDeps: ElvUI
 ## X-Curse-Project-ID: 473233

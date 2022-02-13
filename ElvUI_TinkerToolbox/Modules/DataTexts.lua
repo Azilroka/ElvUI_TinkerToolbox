@@ -59,6 +59,20 @@ local function IsFuncStringValid(_, funcString)
 	return err or true
 end
 
+function CDT:ImportDT(dataString)
+	local name, data = TT:ImportData(dataString)
+
+	if name then
+		E.global.CustomDataTexts[name] = E:CopyTable({}, data)
+		E.global.CustomDataTexts[name].name = nil
+
+		CDT:CreateDT(name, data)
+		CDT:CreateGroup(name)
+
+		EncodedInfo, DecodedInfo = nil, nil
+	end
+end
+
 function CDT:CreateDT(name, data)
 	CDT.CustomDT[name] = true
 
@@ -165,6 +179,13 @@ function CDT:GetOptions()
 		end
 	end
 
+	SharedOptions.eventFunc.luaSyntax = true
+	SharedOptions.updateFunc.luaSyntax = true
+	SharedOptions.onClick.luaSyntax = true
+	SharedOptions.onEnter.luaSyntax = true
+	SharedOptions.onLeave.luaSyntax = true
+	SharedOptions.colorUpdate.luaSyntax = true
+
 	optionsPath.CustomDataTexts = ACH:Group(L["Custom DataTexts"], nil, 3)
 
 	optionsPath.CustomDataTexts.args.new = ACH:Group(L['New'], nil, 0, nil, function(info) return tostring(newInfo[info[#info]] or '') end, function(info, value) newInfo[info[#info]] = strtrim(value) end)
@@ -173,11 +194,11 @@ function CDT:GetOptions()
 
 	optionsPath.CustomDataTexts.args.import = ACH:Group(L['Import'], nil, 3)
 	optionsPath.CustomDataTexts.args.import.args.codeInput = ACH:Input(L['Code'], nil, 1, 8, 'full', function() return EncodedInfo or '' end, function(_, value) EncodedInfo = value DecodedInfo = { TT:DecodeData(value) } end)
+	optionsPath.CustomDataTexts.args.import.args.codeImport = ACH:Execute(L['Import'], nil, 2, function() CDT:ImportDT(EncodedInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedInfo end)
 
 	optionsPath.CustomDataTexts.args.import.args.preview = ACH:Group(L['Preview'])
 	optionsPath.CustomDataTexts.args.import.args.preview.inline = true
 	optionsPath.CustomDataTexts.args.import.args.preview.args = CopyTable(SharedOptions)
-	optionsPath.CustomDataTexts.args.import.args.preview.args.import = ACH:Execute(L['Import'], nil, 0, function() TT:DecodeData(EncodedInfo) end, nil, nil, 'full', nil, nil, function() return not EncodedInfo end)
 	optionsPath.CustomDataTexts.args.import.args.preview.args.name.get = function() return DecodedInfo and DecodedInfo[1] or '' end
 
 	optionsPath.CustomDataTexts.args.spacer = ACH:Group(' ', nil, 4, nil, nil, nil, true)

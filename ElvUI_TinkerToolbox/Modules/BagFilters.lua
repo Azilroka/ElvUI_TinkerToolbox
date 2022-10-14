@@ -113,6 +113,10 @@ function CBF:CacheBagItems(bagID)
 			cache.itemName, _, _, cache.baseItemLevel, cache.itemMinLevel, cache.itemType, cache.itemSubType, _, cache.itemEquipLoc, _, cache.sellPrice, cache.classID, cache.subclassID, cache.bindType, cache.expacID, cache.setID, cache.isCraftingReagent = GetItemInfo(cache.battlepet and cache.itemID or cache.itemLink)
 			cache.stats = GetItemStats(cache.itemLink)
 
+			if not E.Retail and not cache.isBound then
+				cache.isBound = C_Item.IsBound(cache.itemLocation)
+			end
+
 			if GetDetailedItemLevelInfo then
 				cache.unscaledItemLevel = GetDetailedItemLevelInfo(cache.itemLink)
 			end

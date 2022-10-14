@@ -150,6 +150,10 @@ end
 local function IsEventStringValid(_, eventString)
 	wipe(badEvents)
 
+	if eventString == '' or tonumber(eventString) then
+		return  true
+	end
+
 	for event in gmatch(eventString, '%S+') do
 		if not pcall(validator.RegisterEvent, validator, event) then
 			tinsert(badEvents, '|cffffffff' .. event .. '|r')
@@ -165,9 +169,7 @@ local function IsFuncStringValid(_, funcString)
 end
 
 local function IsVarStringValid(_, varString)
-	if tonumber(varString) then
-		return true
-	elseif type(varString) == 'function' then
+	if type(varString) == 'function' then
 		return IsFuncStringValid(_, varString)
 	else
 		return true
@@ -273,12 +275,21 @@ function CT:oUF_CreateTag(tagName, tagTable)
 		oUF.Tags.Vars[tagName] = tagTable.vars
 	end
 
+	local onUpdate
 	if tagTable.events then
-		oUF.Tags.Events[tagName] = tagTable.events
+		onUpdate = tonumber(tagTable.events)
+		if onUpdate then
+			oUF.Tags.OnUpdateThrottle[tagName] = onUpdate
+		else
+			oUF.Tags.Events[tagName] = tagTable.events
+		end
 	end
 
 	oUF.Tags:RefreshMethods(tagName)
-	oUF.Tags:RefreshEvents(tagName)
+
+	if not onUpdate then
+		oUF.Tags:RefreshEvents(tagName)
+	end
 end
 
 function CT:oUF_BuildTag(tagName, tagTable)
@@ -292,8 +303,14 @@ function CT:oUF_BuildTag(tagName, tagTable)
 		oUF.Tags.Vars[tagName] = tagTable.vars
 	end
 
+	local onUpdate
 	if tagTable.events then
-		oUF.Tags.Events[tagName] = tagTable.events
+		onUpdate = tonumber(tagTable.events)
+		if onUpdate then
+			oUF.Tags.OnUpdateThrottle[tagName] = onUpdate
+		else
+			oUF.Tags.Events[tagName] = tagTable.events
+		end
 	end
 end
 
@@ -302,6 +319,7 @@ function CT:oUF_DeleteTag(tag)
 
 	rawset(oUF.Tags.Events, tag, nil)
 	rawset(oUF.Tags.Vars, tag, nil)
+	rawset(oUF.Tags.OnUpdateThrottle, tag, nil)
 	rawset(oUF.Tags.Methods, tag, nil)
 
 	oUF.Tags:RefreshEvents(tag)
@@ -348,8 +366,14 @@ function CT:CreateTagGroup(tag)
 		value = strtrim(value)
 		if E.global.CustomTags[info[#info - 1]][info[#info]] ~= value then
 			E.global.CustomTags[info[#info - 1]][info[#info]] = value ~= '' and value or nil
-			oUF.Tags.Events[info[#info - 1]] = value ~= '' and value or nil
-			oUF.Tags:RefreshEvents(info[#info - 1])
+			local onUpdate = tonumber(value)
+
+			if onUpdate then
+				oUF.Tags.OnUpdateThrottle[info[#info - 1]] = onUpdate
+			else
+				oUF.Tags.Events[info[#info - 1]] = value ~= '' and value or nil
+				oUF.Tags:RefreshEvents(info[#info - 1])
+			end
 		end
 	end
 

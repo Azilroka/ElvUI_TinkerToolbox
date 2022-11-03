@@ -29,8 +29,19 @@ local ToggleFrame = ToggleFrame
 local GameTooltip_Hide = GameTooltip_Hide
 local GameTooltip = GameTooltip
 
-local bagIDs = { 0, 1, 2, 3, 4 }
-local bankIDs = { -1, 5, 6, 7, 8, 9, 10 }
+local bagIDs, bankIDs, bankOffset, maxBankSlots = { 0, 1, 2, 3, 4 }, { -1 }, E.Retail and 5 or 4, E.Retail and 12 or 11
+
+for bankID = bankOffset + 1, maxBankSlots do
+	if bankID ~= 11 or bankID == 11 and not E.Classic then
+		tinsert(bankIDs, bankID)
+	end
+end
+
+if E.Retail then
+	tinsert(bagIDs, 5)
+else
+	tinsert(bagIDs, KEYRING_CONTAINER)
+end
 
 local newInfo = { name = '', func = '' }
 local premade = ''
@@ -105,20 +116,20 @@ function CBF:CacheBagItems(bagID)
 		local cache, _ = {}
 
 		cache.itemLocation = { bagID = bagID, slotIndex = slotID }
-		_, cache.itemCount, _, cache.quality,  cache.readable, cache.lootable, cache.itemLink, _, cache.noValue, cache.itemID, cache.isBound = GetContainerItemInfo(bagID, slotID)
+		E:CopyTable(cache, B:GetContainerItemInfo(bagID, slotID))
 
-		if cache.itemLink then
-			cache.battlepet = strmatch(cache.itemLink, "battlepet") and true
-			cache.itemString = strmatch(cache.itemLink, cache.battlepet and "battlepet[%-?%d:]+" or "item[%-?%d:]+")
-			cache.itemName, _, _, cache.baseItemLevel, cache.itemMinLevel, cache.itemType, cache.itemSubType, _, cache.itemEquipLoc, _, cache.sellPrice, cache.classID, cache.subclassID, cache.bindType, cache.expacID, cache.setID, cache.isCraftingReagent = GetItemInfo(cache.battlepet and cache.itemID or cache.itemLink)
-			cache.stats = GetItemStats(cache.itemLink)
+		if cache.hyperlink then
+			cache.battlepet = strmatch(cache.hyperlink, "battlepet") and true
+			cache.itemString = strmatch(cache.hyperlink, cache.battlepet and "battlepet[%-?%d:]+" or "item[%-?%d:]+")
+			cache.itemName, _, _, cache.baseItemLevel, cache.itemMinLevel, cache.itemType, cache.itemSubType, _, cache.itemEquipLoc, _, cache.sellPrice, cache.classID, cache.subclassID, cache.bindType, cache.expacID, cache.setID, cache.isCraftingReagent = GetItemInfo(cache.battlepet and cache.itemID or cache.hyperlink)
+			cache.stats = GetItemStats(cache.hyperlink)
 
 			if not E.Retail and not cache.isBound then
 				cache.isBound = C_Item.IsBound(cache.itemLocation)
 			end
 
 			if GetDetailedItemLevelInfo then
-				cache.unscaledItemLevel = GetDetailedItemLevelInfo(cache.itemLink)
+				cache.unscaledItemLevel = GetDetailedItemLevelInfo(cache.hyperlink)
 			end
 
 			if _G.C_Item and C_Item_DoesItemExist(cache.itemLocation) then
@@ -379,7 +390,7 @@ function CBF:GetOptions()
 	local COLOR = E:ClassColor(E.myclass, true)
 	local COLOR1 = format('|c%s', COLOR.colorStr)
 
-	for i, name in ipairs({ "itemCount", "quality", "readable", "lootable", "itemLink", "noValue", "itemID", "isBound", "itemName", "baseItemLevel", "itemLevel", "unscaledItemLevel", "itemMinLevel", "itemType", "itemSubType", "itemEquipLoc", "sellPrice", "classID", "subclassID", "bindType", "expacID", "setID", "isCraftingReagent" }) do
+	for i, name in ipairs({ "stackCount", "quality", "isReadable", "hasLoot", "hyperlink", "hasNoValue", "itemID", "isBound", "itemName", "baseItemLevel", "itemLevel", "unscaledItemLevel", "itemMinLevel", "itemType", "itemSubType", "itemEquipLoc", "sellPrice", "classID", "subclassID", "bindType", "expacID", "setID", "isCraftingReagent" }) do
 		optionsPath.CustomBagFilters.args.help.args[name] = ACH:Description(format('%scache.%s|r: %s', COLOR1, name, L["cache."..name]), i, 'medium')
 	end
 

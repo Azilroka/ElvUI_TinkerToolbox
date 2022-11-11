@@ -15,8 +15,7 @@ local tonumber = tonumber
 local format = format
 local strjoin = strjoin
 
-local LibCompress = E.Libs.Compress
-local LibBase64 = E.Libs.Base64
+local LibDeflate = E.Libs.Deflate
 
 E.Options.args.TinkerToolbox = ACH:Group(L["Tinker Toolbox"], nil, 6, 'tab')
 
@@ -30,11 +29,11 @@ end
 function TT:DecodeData(dataString)
 	if not dataString then return end
 
-	local decodedData = LibBase64:Decode(dataString)
-	local decompressedData = LibCompress:Decompress(decodedData)
-	if not decompressedData then return end
+	local decodedData = LibDeflate:DecodeForPrint(dataString)
+	local decompressed = LibDeflate:DecompressDeflate(decodedData)
+	if not decompressed then return end
 
-	local serializedData, nameKey = E:SplitString(decompressedData, '^^;;') -- '^^' indicates the end of the AceSerializer string
+	local serializedData, nameKey = E:SplitString(decompressed, '^^;;') -- '^^' indicates the end of the AceSerializer string
 	serializedData = format('%s%s', serializedData, '^^') --Add back the AceSerializer terminator
 
 	local success, data = TT:Deserialize(serializedData)
@@ -80,10 +79,10 @@ function TT:ExportData(name, dbKey)
 
 	local serialData = TT:Serialize(data)
 	local exportString = format(dbKey and '%s;;%s\a%s' or '%s;;%s', serialData, name, dbKey)
-	local compressedData = LibCompress:Compress(exportString)
-	local encodedData = LibBase64:Encode(compressedData)
+	local compressedData = LibDeflate:CompressDeflate(exportString, LibDeflate.compressLevel)
+	local printableString = LibDeflate:EncodeForPrint(compressedData)
 
-	return encodedData
+	return printableString
 end
 
 function TT:CallModuleFunction(module, func)

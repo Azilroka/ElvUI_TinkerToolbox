@@ -16,7 +16,6 @@ local tinsert = tinsert
 
 local CopyTable = CopyTable
 
-local GetContainerItemInfo = GetContainerItemInfo
 local GetItemInfo = GetItemInfo
 local GetItemStats = GetItemStats
 

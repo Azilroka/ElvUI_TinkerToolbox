@@ -1,9 +1,8 @@
 ## Interface: 100000
 ## Title: |cff1784d1ElvUI|r |cffffffffTinker Toolbox|r
-## Version: 1.18
+## Version: 1.19
 ## Author: Azilroka, Blazeflack
 ## RequiredDeps: ElvUI
-## OptionalDeps: Scrap
 ## X-Curse-Project-ID: 473233
 ## X-Wago-ID: Xb6X8o6p
 
@@ -16,5 +15,4 @@ Modules\Tags.lua
 Modules\DataTexts.lua
 Modules\StyleFilters.lua
 Modules\BagFilters.lua
-Modules\Scrap.lua
 Modules\Distributor.lua

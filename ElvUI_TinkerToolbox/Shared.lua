@@ -11,11 +11,14 @@ local unpack = unpack
 local type = type
 local next = next
 local strsplit = strsplit
+local strfind = strfind
+local gsub = gsub
 local tonumber = tonumber
 local format = format
 local strjoin = strjoin
 
 local LibDeflate = E.Libs.Deflate
+local ElvUIPrefix = '^!E1!'
 
 E.Options.args.TinkerToolbox = ACH:Group(L["Tinker Toolbox"], nil, 6, 'tab')
 
@@ -34,6 +37,11 @@ function TT:DecodeData(dataString)
 	if not decompressed then return end
 
 	local serializedData, nameKey = E:SplitString(decompressed, '^^;;') -- '^^' indicates the end of the AceSerializer string
+
+	if strfind(serializedData, ElvUIPrefix) then
+		serializedData = gsub(serializedData, ElvUIPrefix, '', 1) -- break the ElvUI Prefix off
+	end
+
 	serializedData = format('%s%s', serializedData, '^^') --Add back the AceSerializer terminator
 
 	local success, data = TT:Deserialize(serializedData)

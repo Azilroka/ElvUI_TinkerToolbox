@@ -32,15 +32,16 @@ end
 function TT:DecodeData(dataString)
 	if not dataString then return end
 
+	if strfind(dataString, ElvUIPrefix) then
+		dataString = gsub(dataString, ElvUIPrefix, '', 1) -- break the ElvUI Prefix off
+	end
+
 	local decodedData = LibDeflate:DecodeForPrint(dataString)
+	if not decodedData then return end
 	local decompressed = LibDeflate:DecompressDeflate(decodedData)
 	if not decompressed then return end
 
 	local serializedData, nameKey = E:SplitString(decompressed, '^^;;') -- '^^' indicates the end of the AceSerializer string
-
-	if strfind(serializedData, ElvUIPrefix) then
-		serializedData = gsub(serializedData, ElvUIPrefix, '', 1) -- break the ElvUI Prefix off
-	end
 
 	serializedData = format('%s%s', serializedData, '^^') --Add back the AceSerializer terminator
 

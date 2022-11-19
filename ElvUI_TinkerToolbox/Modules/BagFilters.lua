@@ -432,7 +432,7 @@ end
 function CBF:Initialize()
 	if not E.private.bags.enable then return end
 
-	for i = EQUIPPED_FIRST, EQUIPPED_LAST do
+	for i = (EQUIPPED_FIRST or INVSLOT_FIRST_EQUIPPED), (EQUIPPED_LAST or INVSLOT_LAST_EQUIPPED) do
 		CBF.InventorySlotsLocations[i] = ItemLocation:CreateFromEquipmentSlot(i)
 	end
 

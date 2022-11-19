@@ -122,6 +122,7 @@ function CBF:CacheBagItems(bagID)
 			cache.itemString = strmatch(cache.hyperlink, cache.battlepet and "battlepet[%-?%d:]+" or "item[%-?%d:]+")
 			cache.itemName, _, _, cache.baseItemLevel, cache.itemMinLevel, cache.itemType, cache.itemSubType, _, cache.itemEquipLoc, _, cache.sellPrice, cache.classID, cache.subclassID, cache.bindType, cache.expacID, cache.setID, cache.isCraftingReagent = GetItemInfo(cache.battlepet and cache.itemID or cache.hyperlink)
 			cache.stats = GetItemStats(cache.hyperlink)
+			cache.isEquipment = false
 
 			if not E.Retail and not cache.isBound then
 				cache.isBound = C_Item.IsBound(cache.itemLocation)
@@ -135,6 +136,7 @@ function CBF:CacheBagItems(bagID)
 				cache.itemLevel = C_Item_GetCurrentItemLevel(cache.itemLocation)
 
 				if EQSlots[cache.itemEquipLoc] then
+					cache.isEquipment = true
 					local minSlot, maxSlot
 					if type(EQSlots[cache.itemEquipLoc]) == 'table' then
 						minSlot, maxSlot = unpack(EQSlots[cache.itemEquipLoc])
@@ -237,7 +239,14 @@ function CBF:AddFilterButtons(isBank)
 		button.isBank = isBank
 		button.filter = name
 
-		B:SetButtonTexture(button, filterInfo.icon or 134400)
+		local textureID = tonumber(filterInfo.icon)
+		if not textureID and (not filterInfo.icon or filterInfo.icon == '') then
+			textureID = 134400
+		else
+			textureID = textureID or filterInfo.icon
+		end
+
+		B:SetButtonTexture(button, textureID)
 
 		button:Show()
 		button:ClearAllPoints()

@@ -4,6 +4,7 @@ local E, L, V, P, G = unpack(ElvUI)
 local TTS = TT:NewModule('TinkerToolboxScrap')
 local B = E.Bags
 local ACH = E.Libs.ACH
+local GetContainerItemLink = C_Container and C_Container.GetContainerItemLink or GetContainerItemLink
 
 G["TinkerToolboxScrap"] = {}
 G["TinkerToolboxScrap"]["Enable"] = true
@@ -16,7 +17,7 @@ local IsCosmeticItem = IsCosmeticItem
 function TTS.UpdateSlot(_, self, bagID, slotID)
     if not E.global.TinkerToolboxScrap.Enable then return end
     if
-        (self.Bags[bagID] and self.Bags[bagID].numSlots ~= GetContainerNumSlots(bagID))
+        (self.Bags[bagID] and self.Bags[bagID].numSlots ~= B:GetContainerNumSlots(bagID))
         or not self.Bags[bagID]
         or not self.Bags[bagID][slotID]
     then

@@ -1,7 +1,7 @@
 ## Interface: 30400
 ## Title: |cff1784d1ElvUI|r |cfd9b9b9bTBC|r |cffffffffTinker Toolbox|r
 ## Version: 1.18
-## Author: Azilroka, Blazeflack
+## Author: Azilroka, Blazeflack, Nihilistzsche
 ## RequiredDeps: ElvUI
 ## OptionalDeps: Scrap
 ## X-Curse-Project-ID: 473233

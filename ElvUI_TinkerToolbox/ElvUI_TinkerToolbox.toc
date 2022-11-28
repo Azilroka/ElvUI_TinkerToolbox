@@ -1,4 +1,4 @@
-## Interface: 100000
+## Interface: 100002
 ## Title: |cff1784d1ElvUI|r |cffffffffTinker Toolbox|r
 ## Version: 1.18
 ## Author: Azilroka, Blazeflack, Nihilistzsche

@@ -98,6 +98,11 @@ local EQSlots = {
 	INVTYPE_RANGEDRIGHT = 16,
 }
 
+if not E.Retail then
+	EQSlots.INVTYPE_RELIC = 18
+	EQSlots.INVSLOT_RANGED = 18
+end
+
 local emptyTable = {}
 
 local function buildFunction(str)

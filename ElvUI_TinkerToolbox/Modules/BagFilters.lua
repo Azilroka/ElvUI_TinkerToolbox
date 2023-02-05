@@ -28,12 +28,11 @@ local ToggleFrame = ToggleFrame
 local GameTooltip_Hide = GameTooltip_Hide
 local GameTooltip = GameTooltip
 
-local bagIDs, bankIDs, bankOffset, maxBankSlots = { 0, 1, 2, 3, 4 }, { -1 }, E.Retail and 5 or 4, E.Retail and 12 or 11
+local bagIDs, bankIDs = { 0, 1, 2, 3, 4 }, { -1 }
+local bankOffset, maxBankSlots = (E.Classic or E.Wrath) and 4 or 5, E.Classic and 10 or E.Wrath and 11 or 12
 
 for bankID = bankOffset + 1, maxBankSlots do
-	if bankID ~= 11 or bankID == 11 and not E.Classic then
-		tinsert(bankIDs, bankID)
-	end
+	tinsert(bankIDs, bankID)
 end
 
 if E.Retail then
@@ -46,21 +45,13 @@ local newInfo = { name = '', func = '' }
 local premade = ''
 local EncodedInfo, DecodedInfo
 
-if not E.Retail then
-	tinsert(bagIDs, KEYRING_CONTAINER)
-end
-
-if not E.Classic then
-	tinsert(bankIDs, 11)
-end
-
 local DefaultFilters = {
 	Equipment = { name = L["BAG_FILTER_EQUIPMENT"], icon = 132626, func = "function(cache) return cache.classID == LE_ITEM_CLASS_ARMOR or cache.classID == LE_ITEM_CLASS_WEAPON end" },
 	Consumable = { name = L["BAG_FILTER_CONSUMABLES"], icon = 134873, func = "function(cache) return cache.classID == LE_ITEM_CLASS_CONSUMABLE end" },
 	QuestItems = { name = L["ITEM_BIND_QUEST"], icon = 136797, func = "function(cache) return cache.classID == LE_ITEM_CLASS_QUESTITEM or cache.bindType == LE_ITEM_BIND_QUEST end" },
 	TradeGoods = { name = L["BAG_FILTER_TRADE_GOODS"], icon = 132906, func = "function(cache) return cache.classID == LE_ITEM_CLASS_TRADEGOODS or cache.classID == LE_ITEM_CLASS_RECIPE or cache.classID == LE_ITEM_CLASS_GEM or cache.classID == LE_ITEM_CLASS_ITEM_ENHANCEMENT or cache.classID == LE_ITEM_CLASS_GLYPH end" },
-	BattlePets = { name = L["Battle Pets"], icon = 643856, func = "function(cache) return cache.classID == LE_ITEM_CLASS_BATTLEPET or (cache.classID == LE_ITEM_CLASS_MISCELLANEOUS and cache.subclassID == 2) end" },
-	Miscellaneous = { name = L["Miscellaneous"], icon = 134414, func = "function(cache) return cache.classID == LE_ITEM_CLASS_MISCELLANEOUS or cache.classID == LE_ITEM_CLASS_CONTAINER end" },
+	BattlePets = { name = L["Battle Pets"], icon = 643856, func = "function(cache) return cache.classID == 17 or (cache.classID == 15 and cache.subclassID == 2) end" },
+	Miscellaneous = { name = L["Miscellaneous"], icon = 134414, func = "function(cache) return cache.classID == 15 or cache.classID == LE_ITEM_CLASS_CONTAINER end" },
 	NewItems = { name = L["New Items"], icon = 255351, func = "function(cache) return cache.itemLocation and C_NewItems.IsNewItem(cache.itemLocation.bagID, cache.itemLocation.slotIndex) end" }
 }
 
@@ -120,7 +111,7 @@ function CBF:CacheBagItems(bagID)
 		local cache, _ = {}
 
 		cache.itemLocation = { bagID = bagID, slotIndex = slotID }
-		E:CopyTable(cache, B:GetContainerItemInfo(bagID, slotID))
+		E:CopyTable(cache, B:GetContainerItemInfo(bagID, slotID), true)
 
 		if cache.hyperlink then
 			cache.battlepet = strmatch(cache.hyperlink, "battlepet") and true

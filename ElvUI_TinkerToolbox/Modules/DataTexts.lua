@@ -83,9 +83,9 @@ function CDT:CreateDT(name, data)
 	local clickFunc = data.clickFunc and buildFunction(data.clickFunc)
 	local onEnterFunc = data.onEnterFunc and buildFunction(data.onEnterFunc)
 	local onLeaveFunc = data.onLeaveFunc and buildFunction(data.onLeaveFunc)
-	local colorUpdate = data.colorUpdate and buildFunction(data.colorUpdate)
+	local applySettings = data.applySettings and buildFunction(data.applySettings)
 
-	DT:RegisterDatatext(name, category, events, eventFunc, updateFunc, clickFunc, onEnterFunc, onLeaveFunc, nil, nil, colorUpdate)
+	DT:RegisterDatatext(name, category, events, eventFunc, updateFunc, clickFunc, onEnterFunc, onLeaveFunc, nil, nil, applySettings)
 	DT:UpdateHyperDT()
 end
 
@@ -170,7 +170,7 @@ function CDT:GetOptions()
 		onClick = ACH:Input(L['OnClick Script'], nil, 7, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
 		onEnter = ACH:Input(L['OnEnter Script'], nil, 8, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
 		onLeave = ACH:Input(L['OnLeave Script'], nil, 9, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
-		colorUpdate = ACH:Input(L['Color Update Function'], nil, 10, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+		applySettings = ACH:Input(L['Apply Settings Function'], nil, 10, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
 	}
 
 	for _, optTable in next, SharedOptions do
@@ -184,7 +184,7 @@ function CDT:GetOptions()
 	SharedOptions.onClick.luaSyntax = true
 	SharedOptions.onEnter.luaSyntax = true
 	SharedOptions.onLeave.luaSyntax = true
-	SharedOptions.colorUpdate.luaSyntax = true
+	SharedOptions.applySettings.luaSyntax = true
 
 	optionsPath.CustomDataTexts = ACH:Group(L["Custom DataTexts"], nil, 3)
 

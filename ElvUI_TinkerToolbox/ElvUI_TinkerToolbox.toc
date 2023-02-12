@@ -1,6 +1,6 @@
 ## Interface: 100005
 ## Title: |cff1784d1ElvUI|r |cffffffffTinker Toolbox|r
-## Version: 1.21
+## Version: 1.22
 ## Author: Azilroka, Blazeflack, Nihilistzsche
 ## RequiredDeps: ElvUI
 ## OptionalDeps: Scrap

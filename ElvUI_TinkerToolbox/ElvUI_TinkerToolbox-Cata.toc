@@ -1,6 +1,6 @@
-## Interface: 30401
-## Title: |cff1784d1ElvUI|r |cfd9b9b9bWrath|r |cffffffffTinker Toolbox|r
-## Version: 1.22
+## Interface: 40400
+## Title: |cff1784d1ElvUI|r |cfd9b9b9bCata|r |cffffffffTinker Toolbox|r
+## Version: 1.23
 ## Author: Azilroka, Blazeflack, Nihilistzsche
 ## RequiredDeps: ElvUI
 ## OptionalDeps: Scrap

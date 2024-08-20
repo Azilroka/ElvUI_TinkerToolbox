@@ -1,4 +1,4 @@
-if not IsAddOnLoaded("Scrap") then return end
+if not C_AddOns.IsAddOnLoaded("Scrap") then return end
 local TT = unpack(ElvUI_TinkerToolbox)
 local E, L, V, P, G = unpack(ElvUI)
 local TTS = TT:NewModule('TinkerToolboxScrap')

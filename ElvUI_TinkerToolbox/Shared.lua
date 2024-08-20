@@ -1,5 +1,5 @@
 local _, Engine = ...
-local E, L, V, P, G = unpack(ElvUI) --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(ElvUI)
 local TT = E:NewModule('TinkerToolbox', 'AceEvent-3.0', 'AceHook-3.0', 'AceTimer-3.0', 'AceSerializer-3.0')
 local ACH = E.Libs.ACH
 
@@ -94,27 +94,76 @@ function TT:ExportData(name, dbKey)
 	return printableString
 end
 
-function TT:CallModuleFunction(module, func)
+function TT:ProtectedCall(module, func)
 	local pass, err = pcall(func, module)
 	if not pass and TT.Debug then
-		print(err)
+		error(err)
 	end
 end
 
 function TT:GetOptions()
-	E.Libs.AceGUI.luaSyntax = E.Libs.luaSyntax
-
 	for _, module in TT:IterateModules() do
 		if module.GetOptions then
-			TT:CallModuleFunction(module, module.GetOptions)
+			TT:ProtectedCall(module, module.GetOptions)
 		end
 	end
 end
 
+function TT:SetupFAIAP()
+	local FAIAP = LibStub('LibFAIAP', true)
+	E.Libs.luaSyntax = FAIAP
+	E.Libs.AceGUI.luaSyntax = FAIAP
+
+	local monokai = {}
+	monokai[FAIAP.tokens.TOKEN_SPECIAL] = "|c00f92672"
+	monokai[FAIAP.tokens.TOKEN_KEYWORD] = "|c00f92672"
+	monokai[FAIAP.tokens.TOKEN_COMMENT_SHORT] = "|c0075715e"
+	monokai[FAIAP.tokens.TOKEN_COMMENT_LONG] = "|c0075715e"
+
+	local stringColor = "|c00e6db74"
+	monokai[FAIAP.tokens.TOKEN_STRING] = stringColor
+	monokai[".."] = stringColor
+
+	local tableColor = "|c00e6db74"
+	monokai["..."] = tableColor
+	monokai["("] = tableColor
+	monokai[")"] = tableColor
+	monokai["{"] = tableColor
+	monokai["}"] = tableColor
+	monokai["["] = tableColor
+	monokai["]"] = tableColor
+
+	local arithmeticColor = "|c00ae81ff"
+	monokai[FAIAP.tokens.TOKEN_NUMBER] = arithmeticColor
+	monokai["+"] = arithmeticColor
+	monokai["-"] = arithmeticColor
+	monokai["/"] = arithmeticColor
+	monokai["*"] = arithmeticColor
+
+	local logicColor1 = "|c00f92672"
+	monokai["=="] = logicColor1
+	monokai["<"] = logicColor1
+	monokai["<="] = logicColor1
+	monokai[">"] = logicColor1
+	monokai[">="] = logicColor1
+	monokai["~="] = logicColor1
+
+	local logicColor2 = "|c00f92672"
+	monokai["and"] = logicColor2
+	monokai["or"] = logicColor2
+	monokai["not"] = logicColor2
+
+	monokai[0] = "|r"
+
+	E.Libs.luaSyntax.defaultColorTable = monokai
+end
+
 function TT:Initialize()
+	TT:SetupFAIAP()
+
 	for _, module in TT:IterateModules() do
 		if module.Initialize then
-			TT:CallModuleFunction(module, module.Initialize)
+			TT:ProtectedCall(module, module.Initialize)
 		end
 	end
 

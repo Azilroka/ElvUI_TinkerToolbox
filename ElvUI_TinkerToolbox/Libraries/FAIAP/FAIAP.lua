@@ -32,11 +32,9 @@
 -- Read through this code for further usage help.
 -- (The documentation IS the code)
 
-local E = ElvUI[1]
-local lib = {}
-lib.revision = 1
-
-E.Libs.luaSyntax = lib
+local MAJOR, MINOR = "LibFAIAP", 17
+local lib = LibStub:NewLibrary(MAJOR, MINOR)
+if not lib then return end
 
 local defaultTabWidth = 2
 
@@ -951,7 +949,8 @@ function lib.padWithLinebreaks(code)
 	return code .. "\n\n", true
 end
 
-local defaultColorTable
+local defaultColorTable = {}
+lib.defaultColorTable = defaultColorTable
 
 -- Data tables
 -- No weak table magic, since editboxes can never be removed in WoW
@@ -970,7 +969,7 @@ end
 function lib.colorCodeEditbox(editbox)
 	dirty[editbox] = nil
 
-	local colorTable = editbox.faiap_colorTable or defaultColorTable
+	local colorTable = editbox.faiap_colorTable or lib.defaultColorTable
 
 	local orgCode = editboxGetText(editbox)
 	local prevCode = editboxStringCache[editbox]
@@ -1199,46 +1198,3 @@ function lib.disable(editbox)
 	editboxStringCache[editbox] = nil
 	editboxNumLinesCache[editbox] = nil
 end
-
--- ElvUI modified default color table: based on Monokai
-defaultColorTable = {}
-lib.defaultColorTable = defaultColorTable
-defaultColorTable[tokens.TOKEN_SPECIAL] = "|c00f92672"
-defaultColorTable[tokens.TOKEN_KEYWORD] = "|c00f92672"
-defaultColorTable[tokens.TOKEN_COMMENT_SHORT] = "|c0075715e"
-defaultColorTable[tokens.TOKEN_COMMENT_LONG] = "|c0075715e"
-
-local stringColor = "|c00e6db74"
-defaultColorTable[tokens.TOKEN_STRING] = stringColor
-defaultColorTable[".."] = stringColor
-
-local tableColor = "|c00e6db74"
-defaultColorTable["..."] = tableColor
-defaultColorTable["("] = tableColor
-defaultColorTable[")"] = tableColor
-defaultColorTable["{"] = tableColor
-defaultColorTable["}"] = tableColor
-defaultColorTable["["] = tableColor
-defaultColorTable["]"] = tableColor
-
-local arithmeticColor = "|c00ae81ff"
-defaultColorTable[tokens.TOKEN_NUMBER] = arithmeticColor
-defaultColorTable["+"] = arithmeticColor
-defaultColorTable["-"] = arithmeticColor
-defaultColorTable["/"] = arithmeticColor
-defaultColorTable["*"] = arithmeticColor
-
-local logicColor1 = "|c00f92672"
-defaultColorTable["=="] = logicColor1
-defaultColorTable["<"] = logicColor1
-defaultColorTable["<="] = logicColor1
-defaultColorTable[">"] = logicColor1
-defaultColorTable[">="] = logicColor1
-defaultColorTable["~="] = logicColor1
-
-local logicColor2 = "|c00f92672"
-defaultColorTable["and"] = logicColor2
-defaultColorTable["or"] = logicColor2
-defaultColorTable["not"] = logicColor2
-
-defaultColorTable[0] = "|r"

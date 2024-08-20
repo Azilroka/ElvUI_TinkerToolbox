@@ -16,12 +16,11 @@ local tinsert = tinsert
 
 local CopyTable = CopyTable
 
-local GetItemInfo = GetItemInfo
-local GetItemStats = GetItemStats
-
-local C_Item_DoesItemExist = C_Item and C_Item.DoesItemExist
-local C_Item_GetCurrentItemLevel = C_Item and C_Item.GetCurrentItemLevel
-local GetDetailedItemLevelInfo = GetDetailedItemLevelInfo
+local GetItemInfo = C_Item.GetItemInfo
+local GetItemStats = C_Item.GetItemStats
+local DoesItemExist = C_Item.DoesItemExist
+local GetCurrentItemLevel = C_Item.GetCurrentItemLevel
+local GetDetailedItemLevelInfo = C_Item.GetDetailedItemLevelInfo
 
 local CreateFrame = CreateFrame
 local ToggleFrame = ToggleFrame
@@ -128,8 +127,8 @@ function CBF:CacheBagItems(bagID)
 				cache.unscaledItemLevel = GetDetailedItemLevelInfo(cache.hyperlink)
 			end
 
-			if _G.C_Item and C_Item_DoesItemExist(cache.itemLocation) then
-				cache.itemLevel = C_Item_GetCurrentItemLevel(cache.itemLocation)
+			if DoesItemExist(cache.itemLocation) then
+				cache.itemLevel = GetCurrentItemLevel(cache.itemLocation)
 
 				if EQSlots[cache.itemEquipLoc] then
 					cache.isEquipment = true
@@ -140,7 +139,7 @@ function CBF:CacheBagItems(bagID)
 						minSlot = EQSlots[cache.itemEquipLoc]
 					end
 					for slot = minSlot, (maxSlot or minSlot) do
-						cache.isItemUpgrade = CBF.InventorySlotsLocations[slot] and cache.itemLevel > (C_Item_DoesItemExist(CBF.InventorySlotsLocations[slot]) and C_Item_GetCurrentItemLevel(CBF.InventorySlotsLocations[slot]) or 0)
+						cache.isItemUpgrade = CBF.InventorySlotsLocations[slot] and cache.itemLevel > (DoesItemExist(CBF.InventorySlotsLocations[slot]) and GetCurrentItemLevel(CBF.InventorySlotsLocations[slot]) or 0)
 						if cache.isItemUpgrade then
 							break
 						end
@@ -187,8 +186,8 @@ function CBF:Tooltip_Show()
 	end
 
 	if self.ttText2 then
+		GameTooltip:AddLine(' ')
 		if self.ttText2desc then
-			GameTooltip:AddLine(' ')
 			GameTooltip:AddDoubleLine(self.ttText2, self.ttText2desc, .8, .8, .8, .8, .8, .8)
 		else
 			GameTooltip:AddLine(self.ttText2)
@@ -346,6 +345,7 @@ function CBF:CreateGroup(name)
 		end
 	end
 
+	option.args.func.luaSyntax = true
 	option.args.delete = ACH:Execute(L['Delete'], nil, 0, function(info) CBF:DeleteFilter(info[#info - 1]) CBF:DeleteGroup(info[#info - 1]) CBF:SelectGroup() end, nil, format('Delete - %s?', name), 'full')
 	option.args.export = ACH:Input(L['Export Data'], nil, -1, 10, 'full', function(info) return TT:ExportData(info[#info - 1], TT:JoinDBKey('CustomBagFilters', 'Filters')) end)
 

@@ -1,4 +1,4 @@
-## Interface: 100005
+## Interface: 110002, 40400, 11503
 ## Title: |cff1784d1ElvUI|r |cffffffffTinker Toolbox|r
 ## Version: 1.23
 ## Author: Azilroka, Blazeflack, Nihilistzsche

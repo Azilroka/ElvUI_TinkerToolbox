@@ -35,92 +35,38 @@ E.oUF.Tags.Vars.E = E
 E.oUF.Tags.Vars.L = L
 E.oUF.Tags.Vars.TF = E.TagFunctions
 
-G.CustomTags = {
-	["classcolor:player"] = {
-		func = "function() return Hex(_COLORS.class[select(2, UnitClass('player')]) end"
-	},
-	["deficit:name:colors"] = {
-		func = "function(unit)\n    local missinghp = _TAGS['missinghp'](unit)\n    local String\n\n    if missinghp then\n        local healthcolor = _TAGS['healthcolor'](unit)\n        String = format(\"%s-%s|r\", healthcolor, missinghp)\n    else\n        local name = _TAGS['name'](unit)\n        local namecolor = _TAGS['namecolor'](unit)\n        String = format(\"%s%s|r\", namecolor, name)\n    end\n\n    return String\nend",
-		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_NAME_UPDATE",
-	},
-	["name:custom:length"] = {
-		events = "UNIT_NAME_UPDATE",
-		func = "function(unit)\n    local name = UnitName(unit)\n    return name and _VARS.E:ShortenString(name,_VARS['name:custom:length'])\nend",
-		vars = 5,
-	},
-	["name:custom:abbreviate"] = {
-		events = "UNIT_NAME_UPDATE",
-		func = "function(unit)\n    local name = UnitName(unit)\n\n    if name and string.len(name) > _VARS['name:custom:abbreviate'] then\n        name = gsub(name, '(%S+) ', function(t) return string.utf8sub(t,1,1)..'. ' end)\n    end\n\n    return name\nend",
-		vars = 16,
-	},
-	["num:targeting"] = {
-		events = "UNIT_TARGET PLAYER_TARGET_CHANGED GROUP_ROSTER_UPDATE",
-		func = "function(unit)\n    if not IsInGroup() then return nil end\n    local targetedByNum = 0\n\n    for i = 1, GetNumGroupMembers() do\n        local groupUnit = (IsInRaid() and 'raid'..i or 'party'..i);\n        if (UnitIsUnit(groupUnit..'target', unit) and not UnitIsUnit(groupUnit, 'player')) then\n            targetedByNum = targetedByNum + 1\n        end\n    end\n\n    if UnitIsUnit(\"playertarget\", unit) then\n        targetedByNum = targetedByNum + 1\n    end\n\n    return (targetedByNum > 0 and targetedByNum or nil)\nend",
-	},
-	["name:lower"] = {
-		events = "UNIT_NAME_UPDATE",
-		func = "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and strlower(name) or ''\nend",
-	},
-	["name:caps"] = {
-		events = "UNIT_NAME_UPDATE",
-		func = "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and strupper(name) or ''\nend",
-	},
-}
+G.CustomTags = {}
+
+function CT:AddTag(name, events, func, vars)
+	G.CustomTags[name] = { events = events, func = func, vars = vars }
+end
 
 -- Class Colors
 for CLASS in next, _G.RAID_CLASS_COLORS do
-	G.CustomTags[format("classcolor:%s", strlower(CLASS))] = { func = format("function() return Hex(_COLORS.class['%s']) end", CLASS) }
+	CT:AddTag(format("classcolor:%s", strlower(CLASS)), nil, format("function() return Hex(_COLORS.class['%s']) end", CLASS))
 end
 
+CT:AddTag("classcolor:player", nil, "function() return Hex(_COLORS.class[select(2, UnitClass('player')]) end")
+CT:AddTag("deficit:name:colors", "UNIT_HEALTH UNIT_MAXHEALTH UNIT_NAME_UPDATE", "function(unit)\n    local missinghp = _TAGS['missinghp'](unit)\n    local String\n\n    if missinghp then\n        local healthcolor = _TAGS['healthcolor'](unit)\n        String = format(\"%s-%s|r\", healthcolor, missinghp)\n    else\n        local name = _TAGS['name'](unit)\n        local namecolor = _TAGS['namecolor'](unit)\n        String = format(\"%s%s|r\", namecolor, name)\n    end\n\n    return String\nend")
+CT:AddTag("name:custom:length", "UNIT_NAME_UPDATE", "function(unit)\n    local name = UnitName(unit)\n    return name and _VARS.E:ShortenString(name,_VARS['name:custom:length'])\nend", 5)
+CT:AddTag("name:custom:abbreviate", "UNIT_NAME_UPDATE", "function(unit)\n    local name = UnitName(unit)\n\n    if name and string.len(name) > _VARS['name:custom:abbreviate'] then\n        name = gsub(name, '(%S+) ', function(t) return string.utf8sub(t,1,1)..'. ' end)\n    end\n\n    return name\nend", 16)
+CT:AddTag("num:targeting", "UNIT_TARGET PLAYER_TARGET_CHANGED GROUP_ROSTER_UPDATE", "function(unit)\n    if not IsInGroup() then return nil end\n    local targetedByNum = 0\n\n    for i = 1, GetNumGroupMembers() do\n        local groupUnit = (IsInRaid() and 'raid'..i or 'party'..i);\n        if (UnitIsUnit(groupUnit..'target', unit) and not UnitIsUnit(groupUnit, 'player')) then\n            targetedByNum = targetedByNum + 1\n        end\n    end\n\n    if UnitIsUnit(\"playertarget\", unit) then\n        targetedByNum = targetedByNum + 1\n    end\n\n    return (targetedByNum > 0 and targetedByNum or nil)\nend")
+CT:AddTag("name:lower", "UNIT_NAME_UPDATE", "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and strlower(name) or ''\nend")
+CT:AddTag("name:caps", "UNIT_NAME_UPDATE", "function(unit)\n    local name = UnitName(unit)\n    return name ~= nil and strupper(name) or ''\nend")
+
 for textFormatStyle, textFormat in next, formattedText do
-	G.CustomTags[format("health:%s:hidefull", textFormat)] = {
-		events = "UNIT_HEALTH UNIT_MAXHEALTH",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle)
-	}
-	G.CustomTags[format("health:%s:hidedead", textFormat)] = {
-		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle)
-	}
-	G.CustomTags[format("health:%s:hidefull:hidedead", textFormat)] = {
-		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("power:%s:hidefull:hidezero", textFormat)] = {
-		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("power:%s:hidedead", textFormat)] = {
-		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("power:%s:hidefull", textFormat)] = {
-		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("health:%s:shortvalue:hidefull", textFormat)] = {
-		events = "UNIT_HEALTH UNIT_MAXHEALTH",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle)
-	}
-	G.CustomTags[format("health:%s:shortvalue:hidedead", textFormat)] = {
-		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle)
-	}
-	G.CustomTags[format("health:%s:shortvalue:hidefull:hidedead", textFormat)] = {
-		events = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION",
-		func = format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("power:%s:shortvalue:hidefull:hidezero", textFormat)] = {
-		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("power:%s:shortvalue:hidedead", textFormat)] = {
-		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle),
-	}
-	G.CustomTags[format("power:%s:shortvalue:hidefull", textFormat)] = {
-		events = "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER",
-		func = format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle),
-	}
+	CT:AddTag(format("health:%s:hidefull", textFormat), "UNIT_HEALTH UNIT_MAXHEALTH", format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("health:%s:hidedead", textFormat), "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION", format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("health:%s:hidefull:hidedead", textFormat), "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION", format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("power:%s:hidefull:hidezero", textFormat), "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER", format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("power:%s:hidedead", textFormat), "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH", format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("power:%s:hidefull", textFormat), "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER", format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("health:%s:shortvalue:hidefull", textFormat), "UNIT_HEALTH UNIT_MAXHEALTH", format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("health:%s:shortvalue:hidedead", textFormat), "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION", format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("health:%s:shortvalue:hidefull:hidedead", textFormat), "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION", format("function(unit)\n    local min, max = UnitHealth(unit), UnitHealthMax(unit)\n    local deficit = max - min\n    local String\n\n    if not ((deficit <= 0) or (min == 0) or (UnitIsGhost(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("power:%s:shortvalue:hidefull:hidezero", textFormat), "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER", format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0 or min <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("power:%s:shortvalue:hidedead", textFormat), "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_HEALTH", format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local String\n\n    if not ((min == 0) or (UnitIsGhost(unit) or UnitIsDead(unit))) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle))
+	CT:AddTag(format("power:%s:shortvalue:hidefull", textFormat), "UNIT_DISPLAYPOWER UNIT_POWER_FREQUENT UNIT_MAXPOWER", format("function(unit)\n    local pType = UnitPowerType(unit)\n    local min, max = UnitPower(unit, pType), UnitPowerMax(unit, pType)\n    local deficit = max - min\n    local String\n\n    if not (deficit <= 0) then\n        String = _VARS.E:GetFormattedText('%s', min, max, _VARS.E.db.general.decimalLength, true)\n    end\n\n    return String\nend", textFormatStyle))
 end
 
 G.CustomVars = {}

@@ -148,7 +148,9 @@ function CBF:CacheBagItems(bagID)
 			end
 		end
 
-		CBF.BagCache[bagID][slotID] = cache
+		if bagID and slotID then
+			CBF.BagCache[bagID][slotID] = cache
+		end
 	end
 end
 

@@ -26,9 +26,10 @@ local CreateFrame = CreateFrame
 local ToggleFrame = ToggleFrame
 local GameTooltip_Hide = GameTooltip_Hide
 local GameTooltip = GameTooltip
+local KEYRING_CONTAINER = Enum.BagIndex.Keyring
 
 local bagIDs, bankIDs = { 0, 1, 2, 3, 4 }, { -1 }
-local bankOffset, maxBankSlots = (E.Classic or E.Wrath) and 4 or 5, E.Classic and 10 or E.Wrath and 11 or 12
+local bankOffset, maxBankSlots = (E.Classic or E.Wrath) and 4 or 5, E.Classic and 10 or E.Cata and 11 or 12
 
 for bankID = bankOffset + 1, maxBankSlots do
 	tinsert(bankIDs, bankID)
@@ -36,7 +37,7 @@ end
 
 if E.Retail then
 	tinsert(bagIDs, 5)
-else
+elseif E.Classic then
 	tinsert(bagIDs, KEYRING_CONTAINER)
 end
 

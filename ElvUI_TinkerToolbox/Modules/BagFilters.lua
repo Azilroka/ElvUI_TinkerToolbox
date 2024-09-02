@@ -150,6 +150,7 @@ function CBF:CacheBagItems(bagID)
 		end
 
 		if bagID and slotID then
+			CBF.BagCache[bagID] = CBF.BagCache[bagID] or {}
 			CBF.BagCache[bagID][slotID] = cache
 		end
 	end

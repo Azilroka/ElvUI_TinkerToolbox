@@ -76,7 +76,7 @@ D.GeneratedKeys.global.CustomTags = true
 D.GeneratedKeys.global.CustomVars = true
 
 local function AreTableEquals(currentTable, defaultTable)
-	for option, value in pairs(defaultTable) do
+	for option, value in next, defaultTable do
 		if type(value) == 'table' then
 			value = AreTableEquals(currentTable[option], value)
 		end
@@ -249,14 +249,9 @@ function CT:oUF_BuildTag(tagName, tagTable)
 		oUF.Tags.Vars[tagName] = tagTable.vars
 	end
 
-	local onUpdate
 	if tagTable.events then
-		onUpdate = tonumber(tagTable.events)
-		if onUpdate then
-			oUF.Tags.OnUpdateThrottle[tagName] = onUpdate
-		else
-			oUF.Tags.Events[tagName] = tagTable.events
-		end
+		local onUpdate = tonumber(tagTable.events)
+		oUF.Tags[onUpdate and 'OnUpdateThrottle' or 'Events'][tagName] = onUpdate or tagTable.events
 	end
 end
 
@@ -399,33 +394,21 @@ function CT:CreateVarGroup(var)
 	CustomTags.varGroup.args[var] = option
 end
 
+function CT:ProtectedCall(tbl, func1, func2)
+	for key, value in next, tbl do
+		pcall(func1, CT, key, value)
+		pcall(func2, CT, key)
+	end
+end
+
 function CT:Initialize()
-	-- Build Default Custom Variables
-	for var, values in next, G.CustomVars do
-		pcall(CT.oUF_CreateVar, CT, var, values)
-		CT:CreateVarGroup(var)
-	end
-
-	-- Build Default Custom Tags
-	for tag, values in next, G.CustomTags do
-		pcall(CT.oUF_BuildTag, CT, tag, values)
-		CT:CreateTagGroup(tag)
-	end
-
-	-- Build Saved Custom Variables
-	for var, values in next, E.global.CustomVars do
-		pcall(CT.oUF_CreateVar, CT, var, values)
-		CT:CreateVarGroup(var)
-	end
-
-	-- Build Saved Tags
-	for tag, values in next, E.global.CustomTags do
-		pcall(CT.oUF_BuildTag, CT, tag, values)
-		CT:CreateTagGroup(tag)
-	end
+	CT:ProtectedCall(G.CustomVars, CT.oUF_CreateVar, CT.CreateVarGroup) -- Build Default Custom Variables
+	CT:ProtectedCall(E.global.CustomVars, CT.oUF_CreateVar, CT.CreateVarGroup) -- Build Saved Custom Variables
+	CT:ProtectedCall(G.CustomTags, CT.oUF_BuildTag, CT.CreateTagGroup) -- Build Default Custom Tags
+	CT:ProtectedCall(E.global.CustomTags, CT.oUF_BuildTag, CT.CreateTagGroup) -- Build Saved Tags
 
 	-- Refresh Every Tag
-	for tagName in pairs(oUF.Tags.Methods) do
+	for tagName in next, oUF.Tags.Methods do
 		oUF.Tags:RefreshMethods(tagName)
 		oUF.Tags:RefreshEvents(tagName)
 	end

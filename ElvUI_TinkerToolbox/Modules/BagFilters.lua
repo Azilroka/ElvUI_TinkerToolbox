@@ -163,14 +163,13 @@ function CBF:SetFilter(filter, isBank)
 	local hideOverlay = true
 
 	for _, bagID in next, f.BagIDs do
-		if f.Bags[bagID].numSlots then
-			for slotID = 1, f.Bags[bagID].numSlots do
-				if CBF.ActiveFilter then
-					hideOverlay = CBF.FilterFunctions[CBF.ActiveFilter](CBF.BagCache[bagID] and CBF.BagCache[bagID][slotID] or emptyTable)
-				end
-
-				f.Bags[bagID][slotID].searchOverlay:SetShown(not hideOverlay)
+		if not f.Bags[bagID].numSlots then return end
+		for slotID = 1, f.Bags[bagID].numSlots do
+			if CBF.ActiveFilter then
+				hideOverlay = CBF.FilterFunctions[CBF.ActiveFilter](CBF.BagCache[bagID] and CBF.BagCache[bagID][slotID] or emptyTable)
 			end
+
+			f.Bags[bagID][slotID].searchOverlay:SetShown(not hideOverlay)
 		end
 	end
 end

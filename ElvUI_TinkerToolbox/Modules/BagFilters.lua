@@ -92,7 +92,7 @@ local EQSlots = {
 
 function CBF:CacheBagItems(bagID)
 	for slotID = 1, 38 do
-		local cache, _ = E:CopyTable(cache, B:GetContainerItemInfo(bagID, slotID), true)
+		local cache, _ = E:CopyTable({}, B:GetContainerItemInfo(bagID, slotID), true)
 
 		cache.itemLocation = { bagID = bagID, slotIndex = slotID }
 

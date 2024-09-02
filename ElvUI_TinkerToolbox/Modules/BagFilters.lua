@@ -107,7 +107,7 @@ local function IsFuncStringValid(_, funcString)
 end
 
 function CBF:CacheBagItems(bagID)
-	for slotID = 1, 36 do
+	for slotID = 1, 38 do
 		local cache, _ = {}
 
 		cache.itemLocation = { bagID = bagID, slotIndex = slotID }

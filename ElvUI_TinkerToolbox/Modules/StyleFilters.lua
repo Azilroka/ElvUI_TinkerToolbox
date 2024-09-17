@@ -403,8 +403,7 @@ function CSF:Initialize()
 		E.global.customStyleFilters = nil
 	end
 
-	CSF.customTriggers = {}
-	CSF.customActions = {}
+	CSF.customTriggers, CSF.customActions = {}, {}
 
 	CSF:InitializeTriggerHooks()
 	CSF:InitializeActionHooks()

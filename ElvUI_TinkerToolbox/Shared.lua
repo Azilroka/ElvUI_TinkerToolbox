@@ -103,9 +103,7 @@ end
 
 function TT:GetOptions()
 	for _, module in TT:IterateModules() do
-		if module.GetOptions then
-			TT:ProtectedCall(module, module.GetOptions)
-		end
+		if module.GetOptions then TT:ProtectedCall(module, module.GetOptions) end
 	end
 end
 
@@ -162,9 +160,7 @@ function TT:Initialize()
 	TT:SetupFAIAP()
 
 	for _, module in TT:IterateModules() do
-		if module.Initialize then
-			TT:ProtectedCall(module, module.Initialize)
-		end
+		if module.Initialize then TT:ProtectedCall(module, module.Initialize) end
 	end
 
 	E.Libs.EP:RegisterPlugin('ElvUI_TinkerToolbox', TT.GetOptions)

@@ -6,21 +6,16 @@ local B = E.Bags
 local ACH = E.Libs.ACH
 local GetContainerItemLink = C_Container and C_Container.GetContainerItemLink or GetContainerItemLink
 
-G["TinkerToolboxScrap"] = {}
-G["TinkerToolboxScrap"]["Enable"] = true
+G.TinkerToolboxScrap = {}
+G.TinkerToolboxScrap.Enable = true
 
-local C_TransmogCollection_PlayerHasTransmogByItemInfo = C_TransmogCollection
-    and C_TransmogCollection.PlayerHasTransmogByItemInfo
+local C_TransmogCollection_PlayerHasTransmogByItemInfo = C_TransmogCollection and C_TransmogCollection.PlayerHasTransmogByItemInfo
 local IsCosmeticItem = IsCosmeticItem
 
 --Update Icon on bag slot
 function TTS.UpdateSlot(_, self, bagID, slotID)
     if not E.global.TinkerToolboxScrap.Enable then return end
-    if
-        (self.Bags[bagID] and self.Bags[bagID].numSlots ~= B:GetContainerNumSlots(bagID))
-        or not self.Bags[bagID]
-        or not self.Bags[bagID][slotID]
-    then
+    if (self.Bags[bagID] and self.Bags[bagID].numSlots ~= B:GetContainerNumSlots(bagID)) or not self.Bags[bagID] or not self.Bags[bagID][slotID] then
         return
     end
 

@@ -5,30 +5,14 @@ local CDT = TT:NewModule('CustomDataTexts')
 local D = E:GetModule('Distributor')
 local DT = E:GetModule('DataTexts')
 
-local wipe = wipe
-local pcall = pcall
-local tinsert = tinsert
-local format = format
-local loadstring = loadstring
-local gmatch = gmatch
-local strtrim = strtrim
-local next = next
-local concat = table.concat
+local wipe, pcall, tinsert, format, loadstring, gmatch, strtrim, next, concat, tostring = wipe, pcall, tinsert, format, loadstring, gmatch, strtrim, next, table.concat, tostring
 local CopyTable = CopyTable
-local tostring = tostring
 
-local badEvents = {}
+local ACH, validator, badEvents = E.Libs.ACH, CreateFrame('Frame'), {}
 
-local validator = CreateFrame('Frame')
+local newInfo, optionsPath, EncodedInfo, DecodedInfo = { name = '', eventFunc = '', updateFunc = ''}
 
-local ACH, SharedOptions = E.Libs.ACH
-local optionsPath
-
-local newInfo = { name = '', eventFunc = '', updateFunc = ''}
-local EncodedInfo, DecodedInfo
-
-G.CustomDataTexts = {}
-CDT.CustomDT = {}
+G.CustomDataTexts, CDT.CustomDT = {}, {}
 
 -- Set Distributor to Export
 D.GeneratedKeys.global.CustomDataTexts = true
@@ -58,6 +42,19 @@ local function IsFuncStringValid(_, funcString)
 	local _, err = loadstring('return ' .. funcString)
 	return err or true
 end
+
+local SharedOptions = {
+	name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return not CDT.CustomDT[value] and DT.RegisteredDataTexts[value] and L['Name Taken'] or true end),
+	category = ACH:Input(L['Category'], nil, 2, nil, 'full'),
+	description = ACH:Input(L['Description'], nil, 3, nil, 'full'),
+	events = ACH:Input(L['Events'], nil, 4, nil, 'full', nil, nil, nil, nil, IsEventStringValid),
+	eventFunc = ACH:Input(L['OnEvent Script'], nil, 5, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+	updateFunc = ACH:Input(L['OnUpdate Script'], nil, 6, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+	onClick = ACH:Input(L['OnClick Script'], nil, 7, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+	onEnter = ACH:Input(L['OnEnter Script'], nil, 8, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+	onLeave = ACH:Input(L['OnLeave Script'], nil, 9, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+	applySettings = ACH:Input(L['Apply Settings Function'], nil, 10, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
+}
 
 function CDT:ImportDT(dataString)
 	local name, data = TT:ImportData(dataString)
@@ -159,19 +156,6 @@ end
 
 function CDT:GetOptions()
 	optionsPath = E.Options.args.TinkerToolbox.args
-
-	SharedOptions = {
-		name = ACH:Input(L['Name'], nil, 1, nil, 'full', nil, nil, nil, nil, function(_, value) value = strtrim(value) return not CDT.CustomDT[value] and DT.RegisteredDataTexts[value] and L['Name Taken'] or true end),
-		category = ACH:Input(L['Category'], nil, 2, nil, 'full'),
-		description = ACH:Input(L['Description'], nil, 3, nil, 'full'),
-		events = ACH:Input(L['Events'], nil, 4, nil, 'full', nil, nil, nil, nil, IsEventStringValid),
-		eventFunc = ACH:Input(L['OnEvent Script'], nil, 5, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
-		updateFunc = ACH:Input(L['OnUpdate Script'], nil, 6, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
-		onClick = ACH:Input(L['OnClick Script'], nil, 7, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
-		onEnter = ACH:Input(L['OnEnter Script'], nil, 8, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
-		onLeave = ACH:Input(L['OnLeave Script'], nil, 9, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
-		applySettings = ACH:Input(L['Apply Settings Function'], nil, 10, 10, 'full', nil, nil, nil, nil, IsFuncStringValid),
-	}
 
 	for _, optTable in next, SharedOptions do
 		if optTable.validate then

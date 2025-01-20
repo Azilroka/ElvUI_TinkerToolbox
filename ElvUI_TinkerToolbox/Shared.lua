@@ -112,48 +112,42 @@ function TT:SetupFAIAP()
 	E.Libs.luaSyntax = FAIAP
 	E.Libs.AceGUI.luaSyntax = FAIAP
 
-	local monokai = {}
-	monokai[FAIAP.tokens.TOKEN_SPECIAL] = "|c00f92672"
-	monokai[FAIAP.tokens.TOKEN_KEYWORD] = "|c00f92672"
-	monokai[FAIAP.tokens.TOKEN_COMMENT_SHORT] = "|c0075715e"
-	monokai[FAIAP.tokens.TOKEN_COMMENT_LONG] = "|c0075715e"
-
-	local stringColor = "|c00e6db74"
-	monokai[FAIAP.tokens.TOKEN_STRING] = stringColor
-	monokai[".."] = stringColor
-
-	local tableColor = "|c00e6db74"
-	monokai["..."] = tableColor
-	monokai["("] = tableColor
-	monokai[")"] = tableColor
-	monokai["{"] = tableColor
-	monokai["}"] = tableColor
-	monokai["["] = tableColor
-	monokai["]"] = tableColor
-
 	local arithmeticColor = "|c00ae81ff"
-	monokai[FAIAP.tokens.TOKEN_NUMBER] = arithmeticColor
-	monokai["+"] = arithmeticColor
-	monokai["-"] = arithmeticColor
-	monokai["/"] = arithmeticColor
-	monokai["*"] = arithmeticColor
-
+	local stringColor = "|c00e6db74"
+	local tableColor = "|c00e6db74"
 	local logicColor1 = "|c00f92672"
-	monokai["=="] = logicColor1
-	monokai["<"] = logicColor1
-	monokai["<="] = logicColor1
-	monokai[">"] = logicColor1
-	monokai[">="] = logicColor1
-	monokai["~="] = logicColor1
-
 	local logicColor2 = "|c00f92672"
-	monokai["and"] = logicColor2
-	monokai["or"] = logicColor2
-	monokai["not"] = logicColor2
 
-	monokai[0] = "|r"
-
-	E.Libs.luaSyntax.defaultColorTable = monokai
+	E.Libs.luaSyntax.defaultColorTable = {
+		[FAIAP.tokens.TOKEN_SPECIAL] = "|c00f92672",
+		[FAIAP.tokens.TOKEN_KEYWORD] = "|c00f92672",
+		[FAIAP.tokens.TOKEN_COMMENT_SHORT] = "|c0075715e",
+		[FAIAP.tokens.TOKEN_COMMENT_LONG] = "|c0075715e",
+		[FAIAP.tokens.TOKEN_STRING] = stringColor,
+		[".."] = stringColor,
+		["..."] = tableColor,
+		["("] = tableColor,
+		[")"] = tableColor,
+		["{"] = tableColor,
+		["}"] = tableColor,
+		["["] = tableColor,
+		["]"] = tableColor,
+		[FAIAP.tokens.TOKEN_NUMBER] = arithmeticColor,
+		["+"] = arithmeticColor,
+		["-"] = arithmeticColor,
+		["/"] = arithmeticColor,
+		["*"] = arithmeticColor,
+		["=="] = logicColor1,
+		["<"] = logicColor1,
+		["<="] = logicColor1,
+		[">"] = logicColor1,
+		[">="] = logicColor1,
+		["~="] = logicColor1,
+		["and"] = logicColor2,
+		["or"] = logicColor2,
+		["not"] = logicColor2,
+		[0] = "|r",
+	}
 end
 
 function TT:Initialize()

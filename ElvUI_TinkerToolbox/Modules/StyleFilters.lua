@@ -193,7 +193,7 @@ function CSF:ClearCustomActions(frame)
 end
 
 function CSF:InitializeActionHooks()
-	hooksecurefunc(NP, 'StyleFilterPass', function(_, frame, actions) CSF:ApplyCustomActions(frame, actions) end)
+	hooksecurefunc(NP, 'StyleFilterPass', function(_, frame, _, filter) CSF:ApplyCustomActions(frame, filter.actions) end)
 	hooksecurefunc(NP, 'StyleFilterClear', function(_, frame) CSF:ClearCustomActions(frame) end)
 end
 
